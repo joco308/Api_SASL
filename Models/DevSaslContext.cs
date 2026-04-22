@@ -848,6 +848,9 @@ public partial class DevSaslContext : DbContext
 
             entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
             entity.Property(e => e.Ci).HasColumnName("ci");
+            entity.Property(e => e.Codigo2fa)
+                .HasMaxLength(6)
+                .HasColumnName("codigo2fa");
             entity.Property(e => e.ContrasenaHash)
                 .HasMaxLength(60)
                 .HasColumnName("contrasena_hash");
@@ -857,6 +860,7 @@ public partial class DevSaslContext : DbContext
             entity.Property(e => e.CreateAt)
                 .HasDefaultValueSql("(sysutcdatetime())")
                 .HasColumnName("create_at");
+            entity.Property(e => e.Expiracion).HasColumnName("expiracion");
             entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_nacimiento");
             entity.Property(e => e.IdDireccion).HasColumnName("id_direccion");
             entity.Property(e => e.IdEstadoCivil).HasColumnName("id_estado_civil");

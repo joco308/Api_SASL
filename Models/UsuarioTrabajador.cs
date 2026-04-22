@@ -33,6 +33,10 @@ public partial class UsuarioTrabajador
 
     public DateTime UpdateAt { get; set; }
 
+    public string? Codigo2fa { get; set; }
+
+    public DateTime? Expiracion { get; set; }
+
     public virtual ICollection<AsignacionEmpleado> AsignacionEmpleados { get; set; } = new List<AsignacionEmpleado>();
 
     public virtual ICollection<AsignacionUniforme> AsignacionUniformes { get; set; } = new List<AsignacionUniforme>();
