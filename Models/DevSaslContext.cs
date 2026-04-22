@@ -75,10 +75,6 @@ public partial class DevSaslContext : DbContext
 
     public virtual DbSet<UsuariosCapacitacione> UsuariosCapacitaciones { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=192.168.100.12;Database=dev_SASL;User Id=user_admin;Password=1234;TrustServerCertificate=True;");
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AsignacionEmpleado>(entity =>
@@ -871,6 +867,7 @@ public partial class DevSaslContext : DbContext
             entity.Property(e => e.NombreUsuario)
                 .HasMaxLength(100)
                 .HasColumnName("nombre_usuario");
+            entity.Property(e => e.Pediente2fa).HasColumnName("pediente_2fa");
             entity.Property(e => e.UpdateAt)
                 .HasDefaultValueSql("(sysutcdatetime())")
                 .HasColumnName("update_at");

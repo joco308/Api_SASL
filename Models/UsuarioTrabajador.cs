@@ -37,6 +37,8 @@ public partial class UsuarioTrabajador
 
     public DateTime? Expiracion { get; set; }
 
+    public bool? Pediente2fa { get; set; }
+
     public virtual ICollection<AsignacionEmpleado> AsignacionEmpleados { get; set; } = new List<AsignacionEmpleado>();
 
     public virtual ICollection<AsignacionUniforme> AsignacionUniformes { get; set; } = new List<AsignacionUniforme>();
