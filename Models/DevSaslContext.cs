@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -862,6 +862,9 @@ public partial class DevSaslContext : DbContext
                 .HasColumnName("create_at");
             entity.Property(e => e.Expiracion).HasColumnName("expiracion");
             entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_nacimiento");
+            entity.Property(e => e.SegundoFactorPendiente)
+                .HasColumnName("segundo_factor_pendiente")
+                .HasDefaultValue(false);
             entity.Property(e => e.IdDireccion).HasColumnName("id_direccion");
             entity.Property(e => e.IdEstadoCivil).HasColumnName("id_estado_civil");
             entity.Property(e => e.IdGenero).HasColumnName("id_genero");

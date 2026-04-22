@@ -1,14 +1,13 @@
 using Api_SASL.Models;
+using Api_SASL.Services;
 using Microsoft.EntityFrameworkCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// variables de coneccion y configuracion
 var conexionbd = builder.Configuration.GetConnectionString("DefaultConnection");
 var miReglaCORS = "PermitirNEXTJS";
 
-// Inyeccion de dependencias
 builder.Services.AddDbContext<DevSaslContext>(options => options.UseSqlServer(conexionbd));
 builder.Services.AddCors(options =>
 {
@@ -21,16 +20,16 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddOpenApi();
 
-// crear la app
+builder.Services.AddScoped<IServicioCorreoElectronico, ServicioCorreoElectronico>();
+builder.Services.AddScoped<IServicioAutenticacion2FA, ServicioAutenticacion2FA>();
+
 var app = builder.Build();
 
-// Configure la app
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-//app.UseEndpoints();
 app.UseHttpsRedirection();
 app.UseCors();
 

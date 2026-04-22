@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Api_SASL.Models;
@@ -36,6 +36,8 @@ public partial class UsuarioTrabajador
     public string? Codigo2fa { get; set; }
 
     public DateTime? Expiracion { get; set; }
+
+    public bool? SegundoFactorPendiente { get; set; }
 
     public virtual ICollection<AsignacionEmpleado> AsignacionEmpleados { get; set; } = new List<AsignacionEmpleado>();
 
