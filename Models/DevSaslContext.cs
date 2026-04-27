@@ -868,6 +868,7 @@ public partial class DevSaslContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("nombre_usuario");
             entity.Property(e => e.Pediente2fa).HasColumnName("pediente_2fa");
+            entity.Property(e => e.ServicioAsignado).HasColumnName("servicio_asignado");
             entity.Property(e => e.UpdateAt)
                 .HasDefaultValueSql("(sysutcdatetime())")
                 .HasColumnName("update_at");

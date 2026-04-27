@@ -8,9 +8,11 @@ using Api_SASL.Modulos.Usuarios.Logica;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 
-
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var builder = WebApplication.CreateBuilder(args);
 
 // variables de coneccion y configuracion
@@ -31,10 +33,13 @@ builder.Services.AddCors(options =>
 // servicios de configuracion smtp y token
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.Configure<TokenConfiguracion>(builder.Configuration.GetSection("Jwt"));
+
 // inyectamos sistema de enviar emails
 builder.Services.AddScoped<IEmailServicio, EmailServicio>();
+
 // inyectamos modulo usuarios
 builder.Services.AddScoped<IUsuariosLogica, UsuariosLogica>();
+
 // configurar la autenteticacion con el token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
@@ -46,7 +51,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
         };
         options.Events = new JwtBearerEvents  {
             OnMessageReceived = context => 
@@ -62,7 +69,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PersonalAutorizado", policy => 
+        policy.RequireRole("Gerente", "Administrador")); 
+});
 
 
 builder.Services.AddOpenApi();
@@ -81,6 +92,30 @@ app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication(); // ¿Quién eres?
 app.UseAuthorization();  // ¿Qué puedes hacer?
+app.MapUsuariosEndpoints();
 
+
+app.MapGet("/{nombre}", async (string nombre, IUsuariosLogica logica) =>
+{
+    // Normalizamos el nombre (opcional, según tu DB)
+    var datos = await logica.ObtenerCatalogoPorDominioAsync(nombre);
+    
+    return datos.Any() 
+        ? Results.Ok(datos) 
+        : Results.NotFound(new { mensaje = $"El catálogo '{nombre}' no existe." });
+})
+.WithSummary("Retorna el ID y Nombre de subdominios filtrados por el nombre del Dominio.");
+
+app.MapGet("/api/diagnostico-final", (ClaimsPrincipal user) =>
+{
+    return Results.Ok(new {
+        Autenticado = user.Identity?.IsAuthenticated,
+        Esquema = user.Identity?.AuthenticationType,
+        // Asignamos nombres explícitos a cada propiedad
+        Roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList(),
+        EsGerente = user.IsInRole("Gerente"),
+        ClaimsCompletos = user.Claims.Select(c => new { c.Type, c.Value }).ToList()
+    });
+});
 
 app.Run();
