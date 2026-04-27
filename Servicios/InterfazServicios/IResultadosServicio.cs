@@ -1,3 +1,4 @@
+namespace Api_SASL.Servicios.InterfazServicios;
 // Definimos una "Interfaz" base para todos los resultados posibles
 public interface IResultadoServicio { }
 

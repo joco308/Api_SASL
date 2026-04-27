@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using Api_SASL.Modulos.Servicios.Interfaz;
+using Api_SASL.Modulos.Servicios.Logica;
 
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -39,6 +41,9 @@ builder.Services.AddScoped<IEmailServicio, EmailServicio>();
 
 // inyectamos modulo usuarios
 builder.Services.AddScoped<IUsuariosLogica, UsuariosLogica>();
+
+// inyectamos modulo Servicios
+builder.Services.AddScoped<IServiciosLogica, ServiciosLogica>();
 
 // configurar la autenteticacion con el token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
