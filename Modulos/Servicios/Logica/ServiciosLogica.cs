@@ -5,6 +5,7 @@ using Api_SASL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 
 namespace Api_SASL.Modulos.Servicios.Logica;
 public class ServiciosLogica : IServiciosLogica
@@ -45,38 +46,9 @@ public class ServiciosLogica : IServiciosLogica
 
         _db.Servicios.Add(servicio);
 
-
-        // hacemos relaciones (recursos)
-        var asignar_recursos = new AsignacionRecurso
-        {
-            IdServicioNavigation = servicio,
-            IdRecurso = ad.IdRecurso,
-            Cantidad = ad.CantidadRecursos,
-        };
-
-        _db.AsignacionRecursos.Add(asignar_recursos);
-
-
-        // hacemos relaciones (maquinaria)
-        var asignar_maquinaria =  new AsignacionMaquinarium
-        {
-            IdServicioNavigation = servicio,
-            IdMaquinaria = ad.IdMaquinaria,
-            Cantidad = ad.CantidadMaquinaria,
-            Descripcion = ad.DescripcionMaquinaria
-        };
-
-        _db.AsignacionMaquinaria.Add(asignar_maquinaria);
-
-        if (await _db.SaveChangesAsync()>0)
-        {
-            return new Success();
-        }
-        else
-        {
-            return new NotFound("Algo salio mal..");
-        }
+        return await guardarDatosDB();
     }
+
 
 
     // Mostrar servicios
@@ -97,7 +69,107 @@ public class ServiciosLogica : IServiciosLogica
     }
 
 
+
     // Mostrar toos los datos de Servicio 
+    public async Task<InfoServicio?> informacionServicioAsync(int idServicio)
+    {
+        return await _db.Servicios
+            .Where(u => u.IdServicio == idServicio)
+            .Select(
+            u => new InfoServicio
+            (
+                u.IdServicio,
+                u.IdClienteNavigation.IdEmpresaNavigation.Detalle,
+                u.IdClienteNavigation.NombreCliente,
+                u.IdClienteNavigation.ContactoEmergencia,
+                u.IdDireccionNavigation.NCasa,
+                u.IdDireccionNavigation.Calle,
+                u.IdDireccionNavigation.IdZonaNavigation.Detalle,
+                u.TipoServicioNavigation.Detalle,
+                u.FechaInicio,
+                u.FechaFinal,
+                u.Costo,
+                u.Descripcion,
+                u.CreateAt        
+            ))
+            .FirstOrDefaultAsync();
+    }
 
 
+    //Aasignar empleado a Servicio
+    public async Task<IResultadoServicio> asignarEmpleadoServicioAsync(AsignarUsuariosServicios entrada)
+    {
+        var horario = new Horario
+        {
+            HoraEntrada = entrada.HoraDeEntrada,
+            HoraSalida = entrada.HoraDeSalida
+        };
+
+        _db.Horarios.Add(horario);
+
+        var dias_laborales = await _db.SubDominios.FirstOrDefaultAsync(u => u.Detalle == entrada.DiasLaborales);
+        if(dias_laborales==null) return new ValidationError("Dias laborales mal ingresado");
+
+        var asignacion_empleado = new AsignacionEmpleado
+        {
+            IdUsuario = entrada.idUsuario,
+            IdServicio = entrada.IdServicio,
+            IdHorarioNavigation = horario,
+            DiasLaboralesNavigation = dias_laborales
+        };
+
+        _db.AsignacionEmpleados.Add(asignacion_empleado);
+
+        return await guardarDatosDB();
+    }
+
+
+    // Asignar MAquinaria a Servicio
+    public async Task<IResultadoServicio> asignarMaquinariaServicioAsync(AsignarMaquinariaServicios entrada)
+    {
+        var asignacion_maquinaria = new AsignacionMaquinarium
+        {
+            IdServicio = entrada.IdServicio,
+            IdMaquinaria = entrada.IdMaquinaria,
+            Cantidad = entrada.CantidadMaquinaria,
+            Descripcion = entrada.DescripcionMaquinaria
+        };
+
+        _db.AsignacionMaquinaria.Add(asignacion_maquinaria);
+
+        return await guardarDatosDB();
+
+    }
+
+
+    // Asignar Recurso a Servicio
+    public async Task<IResultadoServicio> asignarRecursoServicioAsync(AsignarRecursoServicios entrada)
+    {
+        var asignacion_recurso = new AsignacionRecurso
+        {
+            IdRecurso = entrada.IdRecurso,
+            IdServicio = entrada.idServicio,
+            Cantidad = entrada.CantidadRecursos
+        };
+
+        _db.AsignacionRecursos.Add(asignacion_recurso);
+
+
+        return await guardarDatosDB();
+    }
+
+
+
+
+    public async Task<IResultadoServicio> guardarDatosDB()
+    {
+        if (await _db.SaveChangesAsync() > 0)
+        {
+            return new Success();
+        }
+        else
+        {
+            return new NotFound("Algo salio mal");
+        }
+    }
 }

@@ -9,13 +9,21 @@ public record AñadirServicio(
     DateOnly Fechainicio,
     DateOnly FechaFinal,
     decimal costo,
-    string Descripcion,
+    string Descripcion
+    );
+
+public record AsignarMaquinariaServicios(
+    int IdServicio,
     int IdMaquinaria,
     int CantidadMaquinaria,
-    string DescripcionMaquinaria,
+    string DescripcionMaquinaria
+);
+
+public record AsignarRecursoServicios(
+    int idServicio,
     int IdRecurso,
     int CantidadRecursos
-    );
+);
 
 public record ListarServicio(
     int IdServicio,
@@ -25,4 +33,28 @@ public record ListarServicio(
     DateOnly FechaInicio,
     DateOnly? FechaFinal,
     decimal costo
+);
+
+public record InfoServicio(
+    int IdServicio,
+    string NombreEmpresa,
+    string NombreCliente,
+    string? Contacto,
+    int NumeroCasa,
+    string Calle,
+    string Zona,
+    string TipoServicio,
+    DateOnly FechaInicio,
+    DateOnly? FechaFinal,
+    decimal Costo,
+    string? Descripcion,
+    DateTime Create_at
+);
+
+public record AsignarUsuariosServicios(
+    int idUsuario,
+    int IdServicio,
+    TimeOnly HoraDeEntrada,
+    TimeOnly HoraDeSalida,
+    string DiasLaborales
 );

@@ -155,6 +155,8 @@ public class UsuariosLogica : IUsuariosLogica
         }
     }
 
+
+    //Editar direccion de un usuario
     public async Task<IResultadoServicio> editarUsuarioDireccion(EditarDireccion ed)
     {
         var usuarioEditado = await _db.UsuarioTrabajadors.Include(u => u.IdDireccionNavigation).FirstOrDefaultAsync(u => u.Ci == ed.CI);
@@ -175,6 +177,8 @@ public class UsuariosLogica : IUsuariosLogica
         }
     }
 
+
+    //editar rol de usuario
     public async Task<IResultadoServicio> editarUsuarioRol(EditarRol ed)
     {
         var usuarioEditado = await _db.UsuarioTrabajadors.FirstOrDefaultAsync(u => u.Ci == ed.CI);
@@ -193,6 +197,8 @@ public class UsuariosLogica : IUsuariosLogica
         }
     }
 
+
+    // listar usuarios
     public async Task<IEnumerable<UsuarioDatos>> usuarios()
     {
         return await _db.UsuarioTrabajadors
@@ -209,6 +215,8 @@ public class UsuariosLogica : IUsuariosLogica
         .ToListAsync();
     }
 
+
+    // listar usuarios con servicio o sin servicios
     public async Task<IEnumerable<UsuarioDatos>> UsuariosFiltados(bool servicio)
     {
         return await _db.UsuarioTrabajadors

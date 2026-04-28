@@ -1,6 +1,7 @@
 using Api_SASL.Modulos.Usuarios.Interfaz;
 using Api_SASL.Modulos.Usuarios.Logica;
 using Api_SASL.Modulos.Usuarios.DTO;
+using Api_SASL.Servicios.InterfazServicios;
 
 public static class UsuariosEndpoints
 {

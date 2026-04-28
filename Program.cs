@@ -97,7 +97,10 @@ app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication(); // ¿Quién eres?
 app.UseAuthorization();  // ¿Qué puedes hacer?
+
+// Endpoints modulos
 app.MapUsuariosEndpoints();
+app.MapServiciosEndpoints();
 
 
 app.MapGet("/{nombre}", async (string nombre, IUsuariosLogica logica) =>
