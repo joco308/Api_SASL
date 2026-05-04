@@ -12,6 +12,9 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Api_SASL.Modulos.Servicios.Interfaz;
 using Api_SASL.Modulos.Servicios.Logica;
+using Api_SASL.Modulos.Maquinaria.Interfaz;
+using Api_SASL.Modulos.Maquinaria.MaquinariaLogica;
+using Api_SASL.Modulos.Maquinaria.Endpoints;
 
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -44,6 +47,9 @@ builder.Services.AddScoped<IUsuariosLogica, UsuariosLogica>();
 
 // inyectamos modulo Servicios
 builder.Services.AddScoped<IServiciosLogica, ServiciosLogica>();
+
+// inyectamos modulo Maquinaria
+builder.Services.AddScoped<IMaquinariaLogica, MaquinariaLogica>();
 
 // configurar la autenteticacion con el token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -101,6 +107,7 @@ app.UseAuthorization();  // ¿Qué puedes hacer?
 // Endpoints modulos
 app.MapUsuariosEndpoints();
 app.MapServiciosEndpoints();
+app.MapMaquinariaEndpoints();
 
 
 app.MapGet("/{nombre}", async (string nombre, IUsuariosLogica logica) =>

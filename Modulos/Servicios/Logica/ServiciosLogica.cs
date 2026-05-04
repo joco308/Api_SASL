@@ -109,6 +109,12 @@ public class ServiciosLogica : IServiciosLogica
 
         var dias_laborales = await _db.SubDominios.FirstOrDefaultAsync(u => u.Detalle == entrada.DiasLaborales);
         if(dias_laborales==null) return new ValidationError("Dias laborales mal ingresado");
+        var empleado = await _db.UsuarioTrabajadors.FindAsync(entrada.idUsuario);
+        if(empleado == null) return new NotFound("No se encointro el id del Usuario");
+        var servicio = await _db.Servicios.FindAsync(entrada.IdServicio);
+        if(servicio == null) return new NotFound("No se encontro el servicio");
+
+        empleado.ServicioAsignado = true;
 
         var asignacion_empleado = new AsignacionEmpleado
         {
