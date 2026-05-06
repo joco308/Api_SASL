@@ -16,7 +16,7 @@ public class ProductosLogica : IProductosLogica
     }
 
 // -------------------------------------------------------------------------------
-    // Añadir Producto
+    // Añadir Recursos
     public async Task<IResultadoServicio> añadirRecursoAsync(AñadirRecurso ent)
     {
         var proveor = await _db.Provedores.FindAsync(ent.IdProvedor);
@@ -37,8 +37,8 @@ public class ProductosLogica : IProductosLogica
         return await guardarCambiosAsync();
     }
 
-
-
+// -------------------------------------------------------------------------------
+    // Listar Recursos
     public async Task<IEnumerable<ListarRecurso>> listarRecursos()
     {
         return await _db.Recursos
@@ -53,6 +53,38 @@ public class ProductosLogica : IProductosLogica
             ).ToListAsync();
     }
 
+// -------------------------------------------------------------------------------
+    // Editar Nombre Recurso
+    public async Task<IResultadoServicio> editarNombreProductoAsync(EditarNombre ent)
+    {
+        var recurso = await _db.Recursos.FindAsync(ent.IdRecurso);
+
+        if(recurso is null) return new NotFound("No se encontro el recurso");
+
+        recurso.Nombre = ent.nombre;
+
+        return await guardarCambiosAsync();
+    }
+
+// -------------------------------------------------------------------------------
+    // Editar Descripcion
+    public async Task<IResultadoServicio> editarDescripcionAsync(EditarDescripcion ent)
+    {
+        var recurso = await _db.Recursos.FindAsync(ent.IdRecurso);
+
+        if(recurso is null) return new NotFound("No se encontro el recurso");
+
+        recurso.Descripcion = ent.Descripcion;
+
+
+        return await guardarCambiosAsync();
+    }
+
+
+
+
+
+
     
 
 
@@ -64,7 +96,7 @@ public class ProductosLogica : IProductosLogica
 
 
 
-public async Task<IResultadoServicio> guardarCambiosAsync()
+    public async Task<IResultadoServicio> guardarCambiosAsync()
     {
         if(await _db.SaveChangesAsync() < 0) return new NotFound("Algo salio mal");
 

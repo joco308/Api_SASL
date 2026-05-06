@@ -8,6 +8,15 @@ public interface IProductosLogica
     // Agregar un recurso
     Task<IResultadoServicio> añadirRecursoAsync(AñadirRecurso ent);
 
-    // listar recurso
+    // Listar recurso
     Task<IEnumerable<ListarRecurso>> listarRecursos();
+
+    // Editar nombre
+    Task<IResultadoServicio> editarNombreProductoAsync(EditarNombre ent);
+
+    // Editar descripcion 
+    Task<IResultadoServicio> editarDescripcionAsync(EditarDescripcion ent);
+
+
+
 }
