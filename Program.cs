@@ -18,6 +18,10 @@ using Api_SASL.Modulos.Maquinaria.Endpoints;
 using Api_SASL.Modulos.Productos.Endpoints;
 using Api_SASL.Modulos.Productos.Interfaz;
 using Api_SASL.Modulos.Productos.Logica;
+using Api_SASL.Modulos.Provedores.Endpoints;
+using Api_SASL.Modulos.Provedores.Logica;
+using Api_SASL.Modulos.Provedores.Interfaz;
+
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +59,9 @@ builder.Services.AddScoped<IMaquinariaLogica, MaquinariaLogica>();
 
 // inyectamos modulo productos
 builder.Services.AddScoped<IProductosLogica, ProductosLogica>();
+
+// inyectamos modulo provedores
+builder.Services.AddScoped<IProvedoresLogica, ProvedoresLogica>();
 
 // configurar la autenteticacion con el token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -105,7 +112,7 @@ if (app.Environment.IsDevelopment())
 
 //app.UseEndpoints();
 app.UseHttpsRedirection();
-app.UseCors();
+app.UseCors(miReglaCORS);
 app.UseAuthentication(); // ¿Quién eres?
 app.UseAuthorization();  // ¿Qué puedes hacer?
 
@@ -114,6 +121,7 @@ app.MapUsuariosEndpoints();
 app.MapServiciosEndpoints();
 app.MapMaquinariaEndpoints();
 app.MapProductosEndpoints();
+app.MapProveedoresEndpoints();
 
 
 

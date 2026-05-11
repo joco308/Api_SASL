@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
+namespace Api_SASL.Modulos.Provedores.Logica;
+
 public class ProvedoresLogica : IProvedoresLogica
 {
     public readonly DevSaslContext _db;
