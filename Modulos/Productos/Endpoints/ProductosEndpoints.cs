@@ -9,9 +9,8 @@ public static class ProductosEndpoints
 {
     public static void MapProductosEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/productos")
-            .WithTags("Productos")
-            .RequireAuthorization();
+        var group = routes.MapGroup("/Api/Productos");
+            
 
 //====================================================================================================
         // Listar todos los recursos/productos
@@ -19,7 +18,8 @@ public static class ProductosEndpoints
         {
             var productos = await logica.listarRecursos();
             return Results.Ok(productos);
-        });
+        })
+        .WithSummary("Listar todos los recursos/productos");
 
 //====================================================================================================
         // Añadir un nuevo recurso
@@ -27,7 +27,9 @@ public static class ProductosEndpoints
         {
             var resultado = await logica.añadirRecursoAsync(dto);
             return ManejarResultado(resultado);
-        });
+        })
+        .WithSummary("Añadir un nuevo recurso")
+        .RequireAuthorization("PersonalAutorizado");
 
 //====================================================================================================
         // Editar solo el nombre del producto
@@ -35,7 +37,9 @@ public static class ProductosEndpoints
         {
             var resultado = await logica.editarNombreProductoAsync(ent);
             return ManejarResultado(resultado);
-        });
+        })
+        .WithSummary("Editar solo el nombre del producto")
+        .RequireAuthorization("PersonalAutorizado");
 
 //====================================================================================================
         // Editar solo la descripción del producto
@@ -43,7 +47,9 @@ public static class ProductosEndpoints
         {
             var resultado = await logica.editarDescripcionAsync(ent);
             return ManejarResultado(resultado);
-        });
+        })
+        .WithSummary("Editar solo la descripción del producto")
+        .RequireAuthorization("PersonalAutorizado");
     }
 
     

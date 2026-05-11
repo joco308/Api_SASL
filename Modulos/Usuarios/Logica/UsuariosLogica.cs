@@ -36,7 +36,7 @@ public class UsuariosLogica : IUsuariosLogica
 
         if (usuario == null || !Verify(us.password, usuario.ContrasenaHash))
         {
-            return new NotFound("No se encontro el usuario o la contraseña es incorrecta");
+            return new NotFound("Credenciales incorrectas.");
         }
 
         var codigo = new Random().Next(100000, 999999).ToString();
@@ -64,18 +64,18 @@ public class UsuariosLogica : IUsuariosLogica
 
         if (usuario == null) return new NotFound("El usuario no tiene un 2FA activo");
 
-        // 2. Validamos si el código expiró
+        // Validamos si el código expiró
         if (usuario.Expiracion < DateTime.UtcNow)
         {
             // Limpiamos los campos para obligar a pedir uno nuevo
             usuario.Codigo2fa = null;
             usuario.Pediente2fa = false;
             await _db.SaveChangesAsync();
-            return new ValidationError("El tiempo del codigo expiro");
+            return new ValidationError("Codigo expiro.");
         }
 
         // 3. Comparamos los códigos
-        if (usuario.Codigo2fa != login.codigoIngresado) return new NotFound("Codico incorrecto");
+        if (usuario.Codigo2fa != login.codigoIngresado) return new NotFound("Codigo incorrecto.");
 
 
         //  Creamos los "Claims" (Datos que van dentro del token)

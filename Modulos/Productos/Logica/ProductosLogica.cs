@@ -10,7 +10,7 @@ public class ProductosLogica : IProductosLogica
 {
     public readonly DevSaslContext _db;
 
-    ProductosLogica(DevSaslContext db)
+    public ProductosLogica(DevSaslContext db)
     {
         _db = db;
     }

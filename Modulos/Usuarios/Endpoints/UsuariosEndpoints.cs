@@ -11,6 +11,7 @@ public static class UsuariosEndpoints
 
 
 //====================================================================================================
+        // lista a los trabajadores
         group.MapGet("/", async (IUsuariosLogica modulo) =>
         {
             var usuarios = await modulo.usuarios();
@@ -30,7 +31,7 @@ public static class UsuariosEndpoints
             return resultado switch
             {
                 Success => Results.Ok(new { mensaje = "Código enviado al correo" }),
-                NotFound n => Results.Unauthorized(),
+                NotFound n => Results.Json(new { mensaje = "Credenciales incorrectas." }, statusCode: 401),
                 _ => Results.StatusCode(500)
             };
         })
