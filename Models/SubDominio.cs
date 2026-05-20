@@ -21,6 +21,8 @@ public partial class SubDominio
 
     public virtual ICollection<Direccion> Direccions { get; set; } = new List<Direccion>();
 
+    public virtual ICollection<DocumentosUsuario> DocumentosUsuarios { get; set; } = new List<DocumentosUsuario>();
+
     public virtual Dominio IdDominioNavigation { get; set; } = null!;
 
     public virtual ICollection<Maquinarium> Maquinaria { get; set; } = new List<Maquinarium>();

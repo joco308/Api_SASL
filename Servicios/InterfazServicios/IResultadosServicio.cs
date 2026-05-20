@@ -4,6 +4,8 @@ public interface IResultadoServicio { }
 
 // Definimos los posibles estados como records
 public record Success() : IResultadoServicio;
+public record SuccessM(string Mensaje) : IResultadoServicio;
+public record Created<T>(T Dato) : IResultadoServicio;   
 public record NotFound(string Mensaje) : IResultadoServicio;
 public record ValidationError(string Error) : IResultadoServicio;
 public record SuccessWithToken(string Token) : IResultadoServicio;

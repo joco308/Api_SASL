@@ -9,15 +9,19 @@ public partial class DocumentosUsuario
 
     public int IdUsuario { get; set; }
 
-    public string TipoDeDocumento { get; set; } = null!;
+    public int IdTipoDeDocumento { get; set; }
 
-    public string Archivo { get; set; } = null!;
+    public string NombreArchivo { get; set; } = null!;
 
     public DateOnly FechaSubida { get; set; }
+
+    public string UbicacionArchivo { get; set; } = null!;
 
     public DateTime CreateAt { get; set; }
 
     public DateTime UpdateAt { get; set; }
+
+    public virtual SubDominio IdTipoDeDocumentoNavigation { get; set; } = null!;
 
     public virtual UsuarioTrabajador IdUsuarioNavigation { get; set; } = null!;
 }

@@ -23,4 +23,10 @@ public interface IServiciosLogica
 
     // asignar recurso con servicio
     Task<IResultadoServicio> asignarRecursoServicioAsync(AsignarRecursoServicios entrada);
+
+    // mostrar horarios
+    Task<IEnumerable<HorarioDTO>> mostrarHorariosAsync();
+
+    // descargar archivo csv
+    Task<IEnumerable<InfoServicio>> datosServicioParaCSVAsync();
 }

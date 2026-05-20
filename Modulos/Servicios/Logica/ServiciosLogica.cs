@@ -26,7 +26,7 @@ public class ServiciosLogica : IServiciosLogica
         {
             IdZona = ad.IdZona,
             Calle = ad.calle,
-            NCasa = ad.NumeroCasa
+            Ncasa = ad.NumeroCasa
         };
 
         _db.Direccions.Add(direccion);
@@ -82,7 +82,7 @@ public class ServiciosLogica : IServiciosLogica
                 u.IdClienteNavigation.IdEmpresaNavigation.Detalle,
                 u.IdClienteNavigation.NombreCliente,
                 u.IdClienteNavigation.ContactoEmergencia,
-                u.IdDireccionNavigation.NCasa,
+                u.IdDireccionNavigation.Ncasa,
                 u.IdDireccionNavigation.Calle,
                 u.IdDireccionNavigation.IdZonaNavigation.Detalle,
                 u.TipoServicioNavigation.Detalle,
@@ -99,16 +99,38 @@ public class ServiciosLogica : IServiciosLogica
     //Aasignar empleado a Servicio
     public async Task<IResultadoServicio> asignarEmpleadoServicioAsync(AsignarUsuariosServicios entrada)
     {
-        var horario = new Horario
+        Horario? horarion = null;
+        var horario = await _db.Horarios.FindAsync(entrada.idHorario);
+        if (horario is null)
         {
-            HoraEntrada = entrada.HoraDeEntrada,
-            HoraSalida = entrada.HoraDeSalida
-        };
+            if (entrada.HoraDeEntrada is null && entrada.HoraDeSalida is null) return new ValidationError("Datos mal ingresados fala horario");
 
-        _db.Horarios.Add(horario);
+            horarion = new Horario
+            {
+                HoraEntrada = entrada.HoraDeEntrada?? TimeOnly.MinValue,
+                HoraSalida = entrada.HoraDeSalida?? TimeOnly.MinValue
+            };
 
-        var dias_laborales = await _db.SubDominios.FirstOrDefaultAsync(u => u.Detalle == entrada.DiasLaborales);
-        if(dias_laborales==null) return new ValidationError("Dias laborales mal ingresado");
+            
+            _db.Horarios.Add(horarion);
+        }
+
+        SubDominio? dias_laboralesn = null;
+        var dias_laborales = await _db.SubDominios.FirstOrDefaultAsync(u => u.IdSubDominio == entrada.idDiasLaborales);
+        if (dias_laborales == null)
+        {
+            if(entrada.DiasLaborales is null) return new ValidationError("Dias laborales mal ingresado falta revisar");
+
+            dias_laboralesn = new SubDominio
+            {
+                IdDominio = 11,
+                Detalle = entrada.DiasLaborales
+            };
+
+            _db.SubDominios.Add(dias_laboralesn);
+        }
+
+
         var empleado = await _db.UsuarioTrabajadors.FindAsync(entrada.idUsuario);
         if(empleado == null) return new NotFound("No se encointro el id del Usuario");
         var servicio = await _db.Servicios.FindAsync(entrada.IdServicio);
@@ -120,8 +142,8 @@ public class ServiciosLogica : IServiciosLogica
         {
             IdUsuario = entrada.idUsuario,
             IdServicio = entrada.IdServicio,
-            IdHorarioNavigation = horario,
-            DiasLaboralesNavigation = dias_laborales
+            IdHorarioNavigation = horario??horarion!,
+            DiasLaboralesNavigation = dias_laborales??dias_laboralesn!
         };
 
         _db.AsignacionEmpleados.Add(asignacion_empleado);
@@ -165,17 +187,71 @@ public class ServiciosLogica : IServiciosLogica
     }
 
 
-
-
-    public async Task<IResultadoServicio> guardarDatosDB()
+    // Mostrar horarios
+    public async Task<IEnumerable<HorarioDTO>> mostrarHorariosAsync()
     {
-        if (await _db.SaveChangesAsync() > 0)
+        return await _db.Horarios
+                .Select(u => new HorarioDTO(
+                    u.IdHorario,
+                    u.HoraEntrada,
+                    u.HoraSalida
+                ))
+                .ToListAsync();
+    }
+
+
+    // mandar datos para descargar csv
+    public async Task<IEnumerable<InfoServicio>> datosServicioParaCSVAsync()
+    {
+        return await _db.Servicios
+                .Select(u => new InfoServicio(
+                    u.IdServicio,
+                    u.IdClienteNavigation.IdEmpresaNavigation.Detalle,
+                    u.IdClienteNavigation.NombreCliente,
+                    u.IdClienteNavigation.ContactoEmergencia,
+                    u.IdDireccionNavigation.Ncasa,
+                    u.IdDireccionNavigation.Calle,
+                    u.IdDireccionNavigation.IdZonaNavigation.Detalle,
+                    u.TipoServicioNavigation.Detalle,
+                    u.FechaInicio,
+                    u.FechaFinal,
+                    u.Costo,
+                    u.Descripcion,
+                    u.CreateAt        
+                ))
+                .ToListAsync();
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+    public async Task<IResultadoServicio> guardarDatosDB() 
+    {
+        try 
         {
-            return new Success();
+            var filasAfectadas = await _db.SaveChangesAsync();
+            
+            // Si se modificó al menos una fila, la operación fue un éxito
+            if (filasAfectadas > 0)
+            {
+                return new Success(); 
+            }
+            
+            // Si es 0, no se modificó nada (por ejemplo, el registro no existía)
+            return new NotFound("No se encontró el registro para actualizar.");
         }
-        else
+        catch (DbUpdateException) 
         {
-            return new NotFound("Algo salio mal");
+            // Captura errores de claves duplicadas, nulos, o restricciones
+            return new NotFound("Error de validación al guardar en la base de datos.");
         }
     }
 }

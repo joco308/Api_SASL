@@ -5,6 +5,7 @@ using Api_SASL.Servicios;
 using Api_SASL.Servicios.InterfazServicios;
 using Api_SASL.Modulos.Usuarios.Interfaz;
 using Api_SASL.Modulos.Usuarios.Logica;
+using Api_SASL.Modulos.Usuarios.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -12,6 +13,7 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Api_SASL.Modulos.Servicios.Interfaz;
 using Api_SASL.Modulos.Servicios.Logica;
+using Api_SASL.Modulos.Servicios.Endpoints;
 using Api_SASL.Modulos.Maquinaria.Interfaz;
 using Api_SASL.Modulos.Maquinaria.MaquinariaLogica;
 using Api_SASL.Modulos.Maquinaria.Endpoints;
@@ -21,6 +23,11 @@ using Api_SASL.Modulos.Productos.Logica;
 using Api_SASL.Modulos.Provedores.Endpoints;
 using Api_SASL.Modulos.Provedores.Logica;
 using Api_SASL.Modulos.Provedores.Interfaz;
+using Api_SASL.Modulos.Trabajadores.Interfaz;
+using Api_SASL.Modulos.Trabajadores.Logica;
+using Api_SASL.Modulos.Trabajadores.Endpoints;
+
+ 
 
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -38,7 +45,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:3000")
         .AllowAnyHeader()
-        .AllowAnyMethod();
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 // servicios de configuracion smtp y token
@@ -63,6 +71,11 @@ builder.Services.AddScoped<IProductosLogica, ProductosLogica>();
 // inyectamos modulo provedores
 builder.Services.AddScoped<IProvedoresLogica, ProvedoresLogica>();
 
+// inyectamos modulo trabajadores
+builder.Services.AddScoped<ITrabajadoresLogica, TrabajadoresLogica>();
+
+var jwtKey = builder.Configuration["Jwt:Key"] 
+    ?? throw new InvalidOperationException("La clave JWT no está configurada en appsettings.");
 // configurar la autenteticacion con el token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
@@ -74,7 +87,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+                Encoding.UTF8.GetBytes(jwtKey)),
             NameClaimType = ClaimTypes.Name,
             RoleClaimType = ClaimTypes.Role
         };
@@ -122,10 +135,11 @@ app.MapServiciosEndpoints();
 app.MapMaquinariaEndpoints();
 app.MapProductosEndpoints();
 app.MapProveedoresEndpoints();
+app.MapTrabajadoresEndpoints();
 
 
 
-app.MapGet("/{nombre}", async (string nombre, IUsuariosLogica logica) =>
+app.MapGet("/Api/Catalogos/{nombre}", async (string nombre, IUsuariosLogica logica) =>
 {
     // Normalizamos el nombre (opcional, según tu DB)
     var datos = await logica.ObtenerCatalogoPorDominioAsync(nombre);
@@ -136,6 +150,8 @@ app.MapGet("/{nombre}", async (string nombre, IUsuariosLogica logica) =>
 })
 .WithSummary("Retorna el ID y Nombre de subdominios filtrados por el nombre del Dominio.");
 
+
+#if DEBUG
 app.MapGet("/api/diagnostico-final", (ClaimsPrincipal user) =>
 {
     return Results.Ok(new {
@@ -147,5 +163,6 @@ app.MapGet("/api/diagnostico-final", (ClaimsPrincipal user) =>
         ClaimsCompletos = user.Claims.Select(c => new { c.Type, c.Value }).ToList()
     });
 });
+#endif
 
 app.Run();

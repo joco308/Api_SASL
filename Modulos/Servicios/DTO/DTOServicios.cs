@@ -54,7 +54,15 @@ public record InfoServicio(
 public record AsignarUsuariosServicios(
     int idUsuario,
     int IdServicio,
-    TimeOnly HoraDeEntrada,
-    TimeOnly HoraDeSalida,
-    string DiasLaborales
+    int idHorario,
+    int idDiasLaborales,
+    TimeOnly? HoraDeEntrada = null,
+    TimeOnly? HoraDeSalida = null,
+    string? DiasLaborales = null
+);
+
+public record HorarioDTO(
+    int idhorario,
+    TimeOnly horaEntrada,
+    TimeOnly horaSalida
 );

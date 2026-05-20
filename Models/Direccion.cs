@@ -11,7 +11,7 @@ public partial class Direccion
 
     public string Calle { get; set; } = null!;
 
-    public int NCasa { get; set; }
+    public int Ncasa { get; set; }
 
     public DateTime CreateAt { get; set; }
 

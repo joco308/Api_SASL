@@ -2,7 +2,10 @@ using Api_SASL.Modulos.Usuarios.Interfaz;
 using Api_SASL.Modulos.Usuarios.Logica;
 using Api_SASL.Modulos.Usuarios.DTO;
 using Api_SASL.Servicios.InterfazServicios;
+using Microsoft.AspNetCore.Mvc;
+using Api_SASL.Models;
 
+namespace Api_SASL.Modulos.Usuarios.Endpoints;
 public static class UsuariosEndpoints
 {
     public static void MapUsuariosEndpoints(this IEndpointRouteBuilder app)
@@ -57,7 +60,7 @@ public static class UsuariosEndpoints
 
 //====================================================================================================    
         // mostrar usuarios por servicio
-        group.MapGet("/{servicio}" ,async (bool servicio, IUsuariosLogica modulo) =>
+        group.MapGet("/{servicio:bool}" ,async ([FromRoute] bool servicio, IUsuariosLogica modulo) =>
         {
             var datos = await modulo.UsuariosFiltados(servicio);
 
@@ -79,7 +82,7 @@ public static class UsuariosEndpoints
             // Mapeamos el IResultadoServicio al código HTTP correspondiente
             return resultado switch
             {
-                Success => Results.Created($"/api/usuarios/{dto.Correo}", new { mensaje = "Usuario creado exitosamente" }),
+                Success => Results.Created($"/Api/Trabajadores/{dto.CI}", new { mensaje = "Usuario creado exitosamente" }),
                 NotFound n => Results.BadRequest(new { error = n.Mensaje }), // Usamos BadRequest porque suele ser un error de datos enviados
                 _ => Results.StatusCode(500)
             };
@@ -90,7 +93,7 @@ public static class UsuariosEndpoints
 
 //====================================================================================================
         // editar direccion
-        group.MapPatch("/{ci}/direccion", async (int ci, EditarDireccion dto, IUsuariosLogica modulo) =>
+        group.MapPatch("/{ci:int}/direccion", async ([FromRoute] int ci, EditarDireccion dto, IUsuariosLogica modulo) =>
         {
             if (ci != dto.CI) return Results.BadRequest(new { error = "El CI de la URL no coincide con el del cuerpo." });
 
@@ -110,7 +113,7 @@ public static class UsuariosEndpoints
 
 //====================================================================================================
         // Editar solo el Rol
-        group.MapPatch("/{ci}/rol", async (int ci, EditarRol dto, IUsuariosLogica modulo) =>
+        group.MapPatch("/{ci:int}/rol", async ([FromRoute] int ci, EditarRol dto, IUsuariosLogica modulo) =>
         {
             if (ci != dto.CI) return Results.BadRequest(new { error = "El CI de la URL no coincide con el del cuerpo." });
 
@@ -128,7 +131,65 @@ public static class UsuariosEndpoints
         .RequireAuthorization("PersonalAutorizado");
 
 //====================================================================================================
+        // Subir Archivos de usuarios
+        group.MapPost("/SubirArchivo", async ([FromForm] DatosParaSubirDoc dto, IFormFile archivo, [FromServices] IWebHostEnvironment env, IUsuariosLogica modulo) =>
+        {
+            var documento = await modulo.subirArchivoUsuarioAsync(archivo,env,dto);
+            return documento switch
+            {
+                Created<DocumentosUsuario> d => Results.Created($"/Api/Usuarios/VerArchivo/{d.Dato.IdDocumento}", d.Dato),
+                ValidationError v => Results.BadRequest(new { error = v.Error }),
+                NotFound n => Results.NotFound(new { error = n.Mensaje }),
+                _ => Results.StatusCode(500)
+            };
+        })
+        .WithSummary("sube archivos de trabajadores")
+        .RequireAuthorization("PersonalAutorizado");
         
+//====================================================================================================
+        // Manda archivos de usuarios por id
+        group.MapGet("/VerArchivo/{id:int}/{tipo:int}", async ([FromRoute] int id, [FromRoute] int tipo, IUsuariosLogica modulo) =>
+        {
+            var dto = new PedirDocumento(id,tipo);
+            var rutacompleta = await modulo.mandarRutaDeArchivoAsync(dto);
+
+            return rutacompleta switch
+            {
+                SuccessM m => Results.File(
+                    path: m.Mensaje,
+                    contentType: "application/pdf",
+                    enableRangeProcessing: true
+                ),
+                NotFound m => Results.BadRequest(new { error = m.Mensaje }),
+                _ => Results.StatusCode(500)
+            };
+        })
+        .WithSummary("Manda archivos de usuarios por id")
+        .RequireAuthorization("PersonalAutorizado");
+
+//====================================================================================================
+        // Agregar carrera a usuario
+        group.MapPost("/AgregarCarrera", async (AñadirCarrera dto, IUsuariosLogica modulo) =>
+        {
+            var nuevacarrera = await modulo.añadoirCarreaUniversitariaUsuarioAsync(dto);
+            return nuevacarrera switch
+            {
+                Success => Results.Ok(new { mensaje = "Carrera agregada" }),
+                ValidationError v => Results.BadRequest(new { error = v.Error }),
+                NotFound n => Results.NotFound(new { error = n.Mensaje }),
+                _ => Results.StatusCode(500)
+            };
+        })
+        .WithSummary("Agregar carrera a usuario")
+        .RequireAuthorization("PersonalAutorizado");
+
+
+
+
+
+
+
+
 
 
 

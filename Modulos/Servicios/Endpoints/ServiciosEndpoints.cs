@@ -3,7 +3,11 @@ using Api_SASL.Modulos.Servicios.Interfaz;
 using Api_SASL.Modulos.Servicios.Logica;
 using Api_SASL.Servicios.InterfazServicios;
 using Microsoft.Identity.Client;
+using System.Text;
+using CsvHelper;
+using System.Globalization;
 
+namespace Api_SASL.Modulos.Servicios.Endpoints;
 public static class ServiciosEndpoints
 {
     public static void MapServiciosEndpoints(this IEndpointRouteBuilder app)
@@ -106,6 +110,41 @@ public static class ServiciosEndpoints
             };
         })
         .WithSummary("Añade un recuro a un servicio por sus id")
+        .RequireAuthorization("PersonalAutorizado");
+
+//=======================================================================================================
+        // Descargar CSV de servicios
+        group.MapGet("/exportar-csv", async (IServiciosLogica logica) =>
+        {
+            var servicios = await logica.datosServicioParaCSVAsync();
+
+            if (!servicios.Any())
+            {
+                return Results.NotFound(new { mensaje = "No hay datos disponibles para exportar." });
+            }
+
+            // Flujo en memoria RAM para armar el archivo sobre la marcha
+            var memoryStream = new MemoryStream();
+            using (var writer = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true))
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                // Agregamos la instrucción especial para que Excel no rompa las columnas
+                await writer.WriteLineAsync("sep=,");
+                
+                await csv.WriteRecordsAsync(servicios);
+                await writer.FlushAsync();
+            }
+
+            // Rebobinamos el puntero al inicio
+            memoryStream.Position = 0;
+
+            return Results.File(
+                fileStream: memoryStream,
+                contentType: "text/csv",
+                fileDownloadName: $"Reporte_Servicios_{DateTime.Now:yyyyMMdd}.csv"
+            );
+        })
+        .WithSummary("Genera y descarga en tiempo real un archivo CSV con la información completa de todos los servivios.")
         .RequireAuthorization("PersonalAutorizado");
 
 

@@ -65,5 +65,5 @@ public partial class UsuarioTrabajador
 
     public virtual ICollection<UsuariosCapacitacione> UsuariosCapacitaciones { get; set; } = new List<UsuariosCapacitacione>();
 
-    public virtual ICollection<SubDominio> IdCarreras { get; set; } = new List<SubDominio>();
+    public virtual ICollection<SubDominio> IdSubDominios { get; set; } = new List<SubDominio>();
 }

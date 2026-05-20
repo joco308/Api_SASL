@@ -13,6 +13,12 @@ public record EditarRol(int CI, int Rol);
 
 public record UsuarioDatos(int IdUsuario, String NombreUsuario, int Ci, String correo, String rol, int salario, DateTime creado);
 
+public record DatosParaSubirDoc(int idUSer, int? idtipoDoc = null, string? tipoDoc = null);
+
+public record AñadirCarrera(int idUsuario, int? idCarrera = null, string? Carrera = null);
+
+public record PedirDocumento(int id, int idtipo);
+
 // ========================================================================
 //para manejar catalo nada mas!!!!!!!!!!!!!
 public record CatalogoDTO(int Id, string Detalle);

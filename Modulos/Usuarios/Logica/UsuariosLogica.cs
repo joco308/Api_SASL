@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic;
 
 namespace Api_SASL.Modulos.Usuarios.Logica;
 public class UsuariosLogica : IUsuariosLogica
@@ -119,7 +120,7 @@ public class UsuariosLogica : IUsuariosLogica
             {
                 IdZona = nv.idZona,
                 Calle = nv.Calle,
-                NCasa = nv.NumeroCasa
+                Ncasa = nv.NumeroCasa
             };
 
             // Hasheamos la contraseña antes de mapear el usuario
@@ -165,7 +166,7 @@ public class UsuariosLogica : IUsuariosLogica
 
         usuarioEditado.IdDireccionNavigation.IdZona = ed.Zona;
         usuarioEditado.IdDireccionNavigation.Calle = ed.Calle;
-        usuarioEditado.IdDireccionNavigation.NCasa = ed.NumeroCasa;
+        usuarioEditado.IdDireccionNavigation.Ncasa = ed.NumeroCasa;
 
         if(await _db.SaveChangesAsync() > 0)
         {
@@ -232,6 +233,129 @@ public class UsuariosLogica : IUsuariosLogica
             u.CreateAt
         ))
         .ToListAsync();
+    }
+
+
+    // Añadir Documento de Ususrio
+    public async Task<IResultadoServicio> subirArchivoUsuarioAsync(IFormFile archivo, IWebHostEnvironment env, DatosParaSubirDoc doc)
+    {
+        if (archivo is null || archivo.Length == 0)
+        {
+            return new NotFound("El archivo esta vacio");
+        }
+
+        const long tamañoMaximoBytes = 5 * 1024 * 1024; // 5 Megabytes
+        if (archivo.Length > tamañoMaximoBytes)
+        {
+            return new ValidationError("El archivo es demasiado grande");
+        }
+
+        var user = await _db.UsuarioTrabajadors.FindAsync(doc.idUSer);
+        if (user is null) return new NotFound("No se encontro el usuario"); 
+
+        SubDominio? tiponew = null;
+        var tipo = await _db.SubDominios.FindAsync(doc.idtipoDoc);
+        if (tipo is null)
+        {
+            if(doc.tipoDoc is null) return new NotFound("No se encontro el tipo o falkta el tipo");
+            tiponew = new SubDominio
+            {
+                IdDominio = 16,
+                Detalle = doc.tipoDoc
+            };
+
+            _db.SubDominios.Add(tiponew);
+        }
+
+        var extensionPermitidas = ".pdf";
+        string extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+
+        if (extensionPermitidas != extension)
+        {
+            return new NotFound("No se permite ese tipo de archivos");
+        }
+
+        try
+        {
+
+            string carpetaDestino = Path.Combine(env.ContentRootPath, "AlmacenamientoServidor", "Documentos");
+
+            // Nos aseguramos de que la estructura de carpetas exista en el disco duro
+            if (!Directory.Exists(carpetaDestino))
+            {
+                Directory.CreateDirectory(carpetaDestino);
+            }
+
+            // SEGURIDAD: Generar un nombre único e irrepetible para el archivo
+            string nombreUnicoArchivo = $"{Guid.NewGuid()}{extension}";
+            string rutaCompletaDestino = Path.Combine(carpetaDestino, nombreUnicoArchivo);
+
+            // FLUJO (Stream): Crear la tubería hacia el disco duro y copiar los bytes
+            using (var streamDelArchivoFisico = new FileStream(rutaCompletaDestino, FileMode.Create))
+            {
+                // Transfiere los bytes que vienen de la red directo al almacenamiento
+                await archivo.CopyToAsync(streamDelArchivoFisico);
+            }
+
+            var documento = new DocumentosUsuario
+            {
+                IdUsuarioNavigation = user,
+                IdTipoDeDocumentoNavigation = tipo ?? tiponew!,
+                NombreArchivo = nombreUnicoArchivo,
+                FechaSubida = DateOnly.FromDateTime(DateTime.Now),
+                UbicacionArchivo = rutaCompletaDestino
+            };
+
+            _db.DocumentosUsuarios.Add(documento);
+
+            if (await _db.SaveChangesAsync() == 0) return new NotFound("Algo salio mal");
+            return new Created<DocumentosUsuario>(documento);
+        }
+        catch (Exception ex)
+        {
+            return new NotFound($"Algo salio mal {ex}");
+        }
+
+    }
+
+    public async Task<IResultadoServicio> mandarRutaDeArchivoAsync(PedirDocumento ent)
+    {
+        var ruta = await _db.DocumentosUsuarios
+            .Where(u => u.IdDocumento == ent.id && u.IdTipoDeDocumento == ent.idtipo)
+            .Select(u => u.UbicacionArchivo)
+            .FirstOrDefaultAsync();
+
+        if(ruta is null) return new NotFound("No se encontro el archivo");
+
+        return new SuccessM(ruta);
+    }
+
+    public async Task<IResultadoServicio> añadoirCarreaUniversitariaUsuarioAsync(AñadirCarrera ent)
+    {
+        SubDominio? ncarrera = null;
+        var carrera = await _db.SubDominios.FindAsync(ent.idCarrera);
+        if(carrera is null)
+        {
+            if(ent.Carrera is null) return new ValidationError("Datos mal ingresados ni id ni nueva carrera");
+
+            ncarrera = new SubDominio
+            {
+                IdDominio = 15,
+                Detalle = ent.Carrera
+            };
+
+            _db.SubDominios.Add(ncarrera);
+        }
+
+        var user = await _db.UsuarioTrabajadors.FindAsync(ent.idUsuario);
+        if(user is null) return new NotFound("no existe ese usuario");
+
+        user.IdSubDominios.Add(carrera??ncarrera!);
+
+        if(await _db.SaveChangesAsync() == 0) return new NotFound("Algo salio mal");
+
+        return new Success();
+
     }
 
 

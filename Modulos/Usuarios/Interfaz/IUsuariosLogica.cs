@@ -26,5 +26,18 @@ public interface IUsuariosLogica
     // mostrar usuarios por servicio
     Task<IEnumerable<UsuarioDatos>> UsuariosFiltados(bool servicio);
 
+    // subir documentos de los usuarios
+    Task<IResultadoServicio> subirArchivoUsuarioAsync(IFormFile archivo, IWebHostEnvironment env, DatosParaSubirDoc doc);
+
+    // Mostrar un archivo por id 
+    Task<IResultadoServicio> mandarRutaDeArchivoAsync(PedirDocumento ent);
+
+    Task<IResultadoServicio> añadoirCarreaUniversitariaUsuarioAsync(AñadirCarrera ent);
+
+
+
+
+    // obtener catalogo de los dominios
     Task<IEnumerable<CatalogoDTO>> ObtenerCatalogoPorDominioAsync(string nombreDominio);
+
 }

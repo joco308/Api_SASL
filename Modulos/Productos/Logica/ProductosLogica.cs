@@ -96,10 +96,25 @@ public class ProductosLogica : IProductosLogica
 
 
 
-    public async Task<IResultadoServicio> guardarCambiosAsync()
+    public async Task<IResultadoServicio> guardarCambiosAsync() 
     {
-        if(await _db.SaveChangesAsync() < 0) return new NotFound("Algo salio mal");
-
-        return new Success();
+        try 
+        {
+            var filasAfectadas = await _db.SaveChangesAsync();
+            
+            // Si se modificó al menos una fila, la operación fue un éxito
+            if (filasAfectadas > 0)
+            {
+                return new Success(); 
+            }
+            
+            // Si es 0, no se modificó nada (por ejemplo, el registro no existía)
+            return new NotFound("No se encontró el registro para actualizar.");
+        }
+        catch (DbUpdateException) 
+        {
+            // Captura errores de claves duplicadas, nulos, o restricciones
+            return new NotFound("Error de validación al guardar en la base de datos.");
+        }
     }
 }
