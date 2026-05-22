@@ -26,12 +26,19 @@ using Api_SASL.Modulos.Provedores.Interfaz;
 using Api_SASL.Modulos.Trabajadores.Interfaz;
 using Api_SASL.Modulos.Trabajadores.Logica;
 using Api_SASL.Modulos.Trabajadores.Endpoints;
+using Api_SASL.Modulos.Reportes.Endpoints;
+using Api_SASL.Modulos.Reportes.Logica;
+using Api_SASL.Modulos.Reportes.Interfaz;
+using QuestPDF.Infrastructure;
 
  
+// Para los pdf
+QuestPDF.Settings.License = LicenseType.Community; 
 
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var builder = WebApplication.CreateBuilder(args);
+
 
 // variables de coneccion y configuracion
 var conexionbd = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -73,6 +80,9 @@ builder.Services.AddScoped<IProvedoresLogica, ProvedoresLogica>();
 
 // inyectamos modulo trabajadores
 builder.Services.AddScoped<ITrabajadoresLogica, TrabajadoresLogica>();
+
+// inyectamos modulo reportes
+builder.Services.AddScoped<IReportesLogica, ReportesLogica>();
 
 var jwtKey = builder.Configuration["Jwt:Key"] 
     ?? throw new InvalidOperationException("La clave JWT no está configurada en appsettings.");
@@ -129,6 +139,9 @@ app.UseCors(miReglaCORS);
 app.UseAuthentication(); // ¿Quién eres?
 app.UseAuthorization();  // ¿Qué puedes hacer?
 
+// Usar archivos de la API 
+app.UseStaticFiles();
+
 // Endpoints modulos
 app.MapUsuariosEndpoints();
 app.MapServiciosEndpoints();
@@ -136,6 +149,7 @@ app.MapMaquinariaEndpoints();
 app.MapProductosEndpoints();
 app.MapProveedoresEndpoints();
 app.MapTrabajadoresEndpoints();
+app.MapReportesEndpoints();
 
 
 
