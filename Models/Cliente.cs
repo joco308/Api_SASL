@@ -13,11 +13,21 @@ public partial class Cliente
 
     public string NombreCliente { get; set; } = null!;
 
-    public string? ContactoEmergencia { get; set; }
+    public string? ContactoEmergenciaCorreo { get; set; }
 
     public DateTime CreateAt { get; set; }
 
     public DateTime UpdateAt { get; set; }
+
+    public string ContrasenaHash { get; set; } = null!;
+
+    public int Nit { get; set; }
+
+    public string? Codigo2fa { get; set; }
+
+    public DateTime? Expiracion { get; set; }
+
+    public bool? Pediente2fa { get; set; }
 
     public virtual Direccion IdDireccionNavigation { get; set; } = null!;
 

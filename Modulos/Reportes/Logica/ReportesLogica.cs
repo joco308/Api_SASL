@@ -7,16 +7,19 @@ using System.Security.Claims;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using Api_SASL.Servicios;
 
 namespace Api_SASL.Modulos.Reportes.Logica;
 
 public class ReportesLogica : IReportesLogica
 {
     readonly private DevSaslContext _db;
+    readonly private WebSocketGestor _webSocket;
 
-    public ReportesLogica(DevSaslContext db)
+    public ReportesLogica(DevSaslContext db, WebSocketGestor gestor)
     {
         _db = db;
+        _webSocket = gestor;
     }
 
 
@@ -37,6 +40,14 @@ public class ReportesLogica : IReportesLogica
         };
 
         _db.Incidentes.Add(nincidente);
+
+        var notificacion = new NotificarIncidente(
+            nincidente.IdIncidente,
+            $"{incidente.descripcion.Substring(0, 10)}...",
+            servicio
+        );
+
+        await _webSocket.EnviarMensajeGrupoAsync("Gerente", notificacion);        
         
         return await guardarDatosDB<Incidente>(nincidente);
     }
@@ -65,7 +76,7 @@ public class ReportesLogica : IReportesLogica
                     u.IdServicioNavigation.IdClienteNavigation.NombreCliente,
                     u.IdServicioNavigation.IdClienteNavigation.IdEmpresaNavigation.Detalle,
                     $"Zona: {u.IdServicioNavigation.IdClienteNavigation.IdDireccionNavigation.IdZonaNavigation.Detalle} Calle: {u.IdServicioNavigation.IdClienteNavigation.IdDireccionNavigation.Calle} N° {u.IdServicioNavigation.IdClienteNavigation.IdDireccionNavigation.Ncasa}",
-                    u.IdServicioNavigation.IdClienteNavigation.ContactoEmergencia,
+                    u.IdServicioNavigation.IdClienteNavigation.ContactoEmergenciaCorreo,
                     _db.TelefonoClientes
                         .Where(t => t.IdCliente == u.IdServicioNavigation.IdClienteNavigation.IdCliente)
                         .Select(t => new TelefonosCliente(
@@ -219,7 +230,7 @@ public class ReportesLogica : IReportesLogica
         }
         catch (Exception ex)
         {
-            return new NotFound($"Error {ex}");
+            return new NotFound($"Error {ex.Message}");
         }
     }
 

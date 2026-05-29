@@ -15,7 +15,7 @@ using Api_SASL.Modulos.Servicios.Interfaz;
 using Api_SASL.Modulos.Servicios.Logica;
 using Api_SASL.Modulos.Servicios.Endpoints;
 using Api_SASL.Modulos.Maquinaria.Interfaz;
-using Api_SASL.Modulos.Maquinaria.MaquinariaLogica;
+using Api_SASL.Modulos.Maquinaria.Logica;
 using Api_SASL.Modulos.Maquinaria.Endpoints;
 using Api_SASL.Modulos.Productos.Endpoints;
 using Api_SASL.Modulos.Productos.Interfaz;
@@ -29,7 +29,11 @@ using Api_SASL.Modulos.Trabajadores.Endpoints;
 using Api_SASL.Modulos.Reportes.Endpoints;
 using Api_SASL.Modulos.Reportes.Logica;
 using Api_SASL.Modulos.Reportes.Interfaz;
+using Api_SASL.Modulos.Clientes.Interfaz;
+using Api_SASL.Modulos.Clientes.Logica;
+using Api_SASL.Modulos.Clientes.Endpoints;
 using QuestPDF.Infrastructure;
+using System.Net.WebSockets;
 
  
 // Para los pdf
@@ -56,6 +60,7 @@ builder.Services.AddCors(options =>
         .AllowCredentials();
     });
 });
+
 // servicios de configuracion smtp y token
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.Configure<TokenConfiguracion>(builder.Configuration.GetSection("Jwt"));
@@ -83,6 +88,9 @@ builder.Services.AddScoped<ITrabajadoresLogica, TrabajadoresLogica>();
 
 // inyectamos modulo reportes
 builder.Services.AddScoped<IReportesLogica, ReportesLogica>();
+
+// inyectamos modulo clientes
+builder.Services.AddScoped<IClientesLogica, ClientesLogica>();
 
 var jwtKey = builder.Configuration["Jwt:Key"] 
     ?? throw new InvalidOperationException("La clave JWT no está configurada en appsettings.");
@@ -119,13 +127,21 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("PersonalAutorizado", policy => 
         policy.RequireRole("Gerente", "Administrador")); 
+    options.AddPolicy("Cliente", policy => 
+        policy.RequireRole("Cliente"));
 });
+
+// webSocket inceatamos la clase
+builder.Services.AddSingleton<WebSocketGestor>();
 
 
 builder.Services.AddOpenApi();
 
 // crear la app
 var app = builder.Build();
+
+// añadimos el webSockjet
+app.UseWebSockets();
 
 // Configure la app
 if (app.Environment.IsDevelopment())
@@ -150,9 +166,10 @@ app.MapProductosEndpoints();
 app.MapProveedoresEndpoints();
 app.MapTrabajadoresEndpoints();
 app.MapReportesEndpoints();
+app.MapClientesEndpoints();
 
 
-
+// tener los Sub dominios 
 app.MapGet("/Api/Catalogos/{nombre}", async (string nombre, IUsuariosLogica logica) =>
 {
     // Normalizamos el nombre (opcional, según tu DB)
@@ -163,6 +180,52 @@ app.MapGet("/Api/Catalogos/{nombre}", async (string nombre, IUsuariosLogica logi
         : Results.NotFound(new { mensaje = $"El catálogo '{nombre}' no existe." });
 })
 .WithSummary("Retorna el ID y Nombre de subdominios filtrados por el nombre del Dominio.");
+
+
+// conectar el webSocket
+app.Map("/ws", async (HttpContext context, WebSocketGestor gestor, ClaimsPrincipal user) =>
+{
+    if (!context.WebSockets.IsWebSocketRequest)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        return;
+    }
+
+    // 1. El guardia acepta la conexión
+    using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+
+    var usuarioId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+    var rol = user.FindFirst(ClaimTypes.Role)?.Value!;
+
+    // 2. El recepcionista lo guarda en su casillero
+    gestor.AgregarConexion(usuarioId, rol, webSocket);
+
+    // 3. Mantener la conexión viva escuchando al cliente
+    var buffer = new byte[1024 * 4];
+    try
+    {
+        // Bucle de escucha correcto y limpio
+        while (webSocket.State == WebSocketState.Open)
+        {
+            var resultado = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+            if (resultado.MessageType == WebSocketMessageType.Close)
+            {
+                break;
+            }
+        }
+    }
+    catch (WebSocketException ex)
+    {
+        Console.WriteLine($"[WebSocket] Desconexión abrupta de {usuarioId}: {ex.Message}");
+    }
+    finally
+    {
+        // 6. GARANTIZADO: Pase lo que pase, limpiamos el casillero al salir
+        await gestor.EliminarConexionAsync(usuarioId, rol);
+    }
+})
+.RequireAuthorization();
 
 
 #if DEBUG

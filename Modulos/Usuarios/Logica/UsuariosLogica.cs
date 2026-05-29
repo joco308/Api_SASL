@@ -46,12 +46,20 @@ public class UsuariosLogica : IUsuariosLogica
         usuario.Expiracion = DateTime.UtcNow.AddMinutes(5);
         usuario.Pediente2fa = true;
 
-        await _db.SaveChangesAsync();
+        try
+        {
+            var filasAfectadas = await _db.SaveChangesAsync();
 
-        await _email.EnviarCodigo2FAAsync(us.correo, codigo);
-        
+            if(filasAfectadas == 0) return new ValidationError("Algo salio mal");
 
-        return new Success();
+            await _email.EnviarCodigo2FAAsync(us.correo, codigo);
+
+            return new Success();
+        }
+        catch (Exception ex)
+        {
+            return new NotFound($"Error {ex}");
+        }
     }  
 
 
@@ -76,7 +84,7 @@ public class UsuariosLogica : IUsuariosLogica
         }
 
         // 3. Comparamos los códigos
-        if (usuario.Codigo2fa != login.codigoIngresado) return new NotFound("Codigo incorrecto.");
+        if (usuario.Codigo2fa != login.codigoIngresado) return new ValidationError("Codigo incorrecto.");
 
 
         //  Creamos los "Claims" (Datos que van dentro del token)

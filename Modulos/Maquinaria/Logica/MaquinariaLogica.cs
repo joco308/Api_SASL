@@ -6,7 +6,7 @@ using Microsoft.Identity.Client;
 using Api_SASL.Servicios.InterfazServicios;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Api_SASL.Modulos.Maquinaria.MaquinariaLogica;
+namespace Api_SASL.Modulos.Maquinaria.Logica;
 
 public class MaquinariaLogica : IMaquinariaLogica
 {

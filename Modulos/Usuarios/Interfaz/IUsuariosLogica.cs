@@ -32,6 +32,7 @@ public interface IUsuariosLogica
     // Mostrar un archivo por id 
     Task<IResultadoServicio> mandarRutaDeArchivoAsync(PedirDocumento ent);
 
+    // añadir carrear universitaria
     Task<IResultadoServicio> añadoirCarreaUniversitariaUsuarioAsync(AñadirCarrera ent);
 
 

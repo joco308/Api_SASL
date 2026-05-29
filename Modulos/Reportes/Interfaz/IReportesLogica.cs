@@ -1,4 +1,5 @@
 using Api_SASL.Modulos.Reportes.DTO;
+using Api_SASL.Servicios;
 using Api_SASL.Servicios.InterfazServicios;
 using System.Security.Claims;
 

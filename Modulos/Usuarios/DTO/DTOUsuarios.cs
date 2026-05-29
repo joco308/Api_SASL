@@ -5,7 +5,20 @@ namespace Api_SASL.Modulos.Usuarios.DTO;
 public record UsuarioLogin(String correo, String password);
 public record Login2FA(string email, string codigoIngresado);
 
-public record NuevoUsiario(String NombreUsuario, DateOnly FechaNacimiento, String Correo, int IdRol, int IdEstadoCivil, int IdGradoAcademico, int IdGenero, String Calle, int idZona, int NumeroCasa, String Contrasena, int idPais, int CI);
+public record NuevoUsiario(
+    string NombreUsuario,
+    DateOnly FechaNacimiento,
+    string Correo,
+    int IdRol,
+    int IdEstadoCivil,
+    int IdGradoAcademico,
+    int IdGenero,
+    string Calle,
+    int idZona,
+    int NumeroCasa,
+    string Contrasena,
+    int idPais,
+    int CI);
 
 public record EditarDireccion(int CI, int Zona, String Calle, int NumeroCasa);
 

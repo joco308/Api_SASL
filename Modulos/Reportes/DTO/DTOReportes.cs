@@ -34,3 +34,9 @@ public record AddMemorandum(
     string Descripcion
 );
 
+
+public record NotificarIncidente(
+    int idIncidente,
+    string descripcionResumina,
+    int IdServicio
+);
