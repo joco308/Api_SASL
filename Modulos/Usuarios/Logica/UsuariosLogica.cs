@@ -42,8 +42,8 @@ public class UsuariosLogica : IUsuariosLogica
 
         var codigo = new Random().Next(100000, 999999).ToString();
         
-        usuario.Codigo2fa = codigo;
-        usuario.Expiracion = DateTime.UtcNow.AddMinutes(5);
+        usuario.Codigo2fa = HashPassword(codigo);
+        usuario.Expiracion = DateTime.UtcNow.AddMinutes(2);
         usuario.Pediente2fa = true;
 
         try
@@ -84,7 +84,7 @@ public class UsuariosLogica : IUsuariosLogica
         }
 
         // 3. Comparamos los códigos
-        if (usuario.Codigo2fa != login.codigoIngresado) return new ValidationError("Codigo incorrecto.");
+        if (!Verify(login.codigoIngresado,usuario.Codigo2fa)) return new ValidationError("Codigo incorrecto.");
 
 
         //  Creamos los "Claims" (Datos que van dentro del token)
@@ -261,22 +261,10 @@ public class UsuariosLogica : IUsuariosLogica
         var user = await _db.UsuarioTrabajadors.FindAsync(doc.idUSer);
         if (user is null) return new NotFound("No se encontro el usuario"); 
 
-        SubDominio? tiponew = null;
-        var tipo = await _db.SubDominios.FindAsync(doc.idtipoDoc);
-        if (tipo is null)
-        {
-            if(doc.tipoDoc is null) return new NotFound("No se encontro el tipo o falkta el tipo");
-            tiponew = new SubDominio
-            {
-                IdDominio = 16,
-                Detalle = doc.tipoDoc
-            };
-
-            _db.SubDominios.Add(tiponew);
-        }
 
         var extensionPermitidas = ".pdf";
-        string extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+        string nombrelimpio = Path.GetFileName(archivo.FileName);
+        string extension = Path.GetExtension(nombrelimpio).ToLowerInvariant();
 
         if (extensionPermitidas != extension)
         {
@@ -285,6 +273,19 @@ public class UsuariosLogica : IUsuariosLogica
 
         try
         {
+            SubDominio? tiponew = null;
+            var tipo = await _db.SubDominios.FindAsync(doc.idtipoDoc);
+            if (tipo is null)
+            {
+                if(doc.tipoDoc is null) return new NotFound("No se encontro el tipo o falkta el tipo");
+                tiponew = new SubDominio
+                {
+                    IdDominio = 16,
+                    Detalle = doc.tipoDoc
+                };
+
+                _db.SubDominios.Add(tiponew);
+            }
 
             string carpetaDestino = Path.Combine(env.ContentRootPath, "AlmacenamientoServidor", "Documentos");
 
@@ -321,23 +322,26 @@ public class UsuariosLogica : IUsuariosLogica
         }
         catch (Exception ex)
         {
-            return new NotFound($"Algo salio mal {ex}");
+            return new NotFound($"Algo salio mal {ex.Message}");
         }
 
     }
 
-    public async Task<IResultadoServicio> mandarRutaDeArchivoAsync(PedirDocumento ent)
+    // mandar ruta del archivo
+    public async Task<IResultadoServicio> mandarRutaDeArchivoAsync(int ent)
     {
         var ruta = await _db.DocumentosUsuarios
-            .Where(u => u.IdDocumento == ent.id && u.IdTipoDeDocumento == ent.idtipo)
+            .Where(u => u.IdDocumento == ent)
             .Select(u => u.UbicacionArchivo)
             .FirstOrDefaultAsync();
 
         if(ruta is null) return new NotFound("No se encontro el archivo");
 
+
         return new SuccessM(ruta);
     }
 
+    // añadir carrera universitaria a usuario
     public async Task<IResultadoServicio> añadoirCarreaUniversitariaUsuarioAsync(AñadirCarrera ent)
     {
         SubDominio? ncarrera = null;
@@ -365,6 +369,170 @@ public class UsuariosLogica : IUsuariosLogica
         return new Success();
 
     }
+
+    // Listar archivos por tipo de 1 unuario
+    public async Task<IEnumerable<DocumentosUsuarioTipo>> listDocuemntosUsuarioTipoAsync(PedirDocumentos ent)
+    {
+        return await _db.DocumentosUsuarios
+                .AsNoTracking()
+                .Where(u => u.IdUsuario == ent.id && u.IdTipoDeDocumento == ent.idtipo)
+                .Select(u => new DocumentosUsuarioTipo(
+                    u.IdDocumento,
+                    u.NombreArchivo,
+                    u.FechaSubida
+                ))
+                .ToListAsync();
+    }
+
+
+    // añadir capasitacion
+    public async Task<IResultadoServicio> agregarCapasitacionAsync(AñadirCapasitacion ent)
+    {
+        var capasitacion = new Capacitacione
+        {
+            Nombre = ent.Nombre,
+            Descripcion = ent.Descripcion,
+            Fecha = ent.Fecha
+        };
+
+        _db.Capacitaciones.Add(capasitacion);
+
+        if (await _db.SaveChangesAsync() == 0) return new NotFound("Algo salio mal");
+        return new Created<Capacitacione>(capasitacion);
+    }
+
+    // poner un usuario en capasitacion
+    public async Task<IResultadoServicio> usuarioCapasitacionAsync(PonerUsuarioCapasitacion ent)
+    {
+        var usuariocapasitacion = new UsuariosCapacitacione
+        {
+            IdUsuario = ent.IdUsuario,
+            IdCapacitacion = ent.IdCapacitacion,
+            Estado = ent.estado
+        };
+
+        _db.UsuariosCapacitaciones.Add(usuariocapasitacion);
+
+        if (await _db.SaveChangesAsync() == 0) return new NotFound("Algo salio mal");
+        return new Created<UsuariosCapacitacione>(usuariocapasitacion);
+    }
+
+
+    // listar capasitaciones
+    public async Task<IEnumerable<ListarCapasitaciones>> listarCapasitacionesAsync()
+    {
+        
+
+        return await _db.Capacitaciones
+                .Select(u => new ListarCapasitaciones(
+                    u.IdCapacitacion,
+                    u.Nombre,
+                    u.Descripcion!,
+                    u.Fecha,
+                    _db.UsuariosCapacitaciones
+                        .Count(t => t.IdCapacitacion == u.IdCapacitacion)
+                ))
+                .ToListAsync();
+    }
+
+
+    // informacion de 1 capasitacion
+    public async Task<InfoCapasitacion?> InfoCapasitacionAsync(int IdCapacitacion)
+    {
+        return await _db.Capacitaciones
+                .Where(u => u.IdCapacitacion == IdCapacitacion)
+                .Select(u => new InfoCapasitacion(
+                    u.IdCapacitacion,
+                    u.Nombre,
+                    u.Descripcion!,
+                    u.Fecha,
+                    _db.UsuariosCapacitaciones
+                        .Where(t => t.IdCapacitacion == u.IdCapacitacion)
+                        .Select(t => new usuarioInscrito(
+                            t.IdUsuario,
+                            t.IdUsuarioNavigation.NombreUsuario,
+                            t.Estado
+                        ))
+                        .ToArray()
+                ))
+                .FirstOrDefaultAsync();
+    }
+
+    // añadir uniforme 
+    public async Task<IResultadoServicio> añadirUniformeAsync(AñadirUniforme ent)
+    {
+        var uniforme = new Uniforme
+        {
+            NombreUniforme = ent.NombreUniforme,
+            Talla = ent.Talla,
+            Descripcion = ent.Descripcion
+        };
+
+        _db.Uniformes.Add(uniforme);
+
+        if (await _db.SaveChangesAsync() == 0) return new NotFound("Algo salio mal");
+        return new Created<Uniforme>(uniforme);
+    }
+
+    // listar uniformes
+    public async Task<IEnumerable<ListarUniformes>> ListarUniformesAsync()
+    {
+        return await _db.Uniformes
+                .Select(u => new ListarUniformes(
+                    u.IdUniforme,
+                    u.NombreUniforme,
+                    u.Talla,
+                    u.Descripcion!
+                ))
+                .ToListAsync();
+    }
+
+
+    // asignar uniforme a empleado
+    public async Task<IResultadoServicio> asignarUniformeAsync(AsignarUniformeEmpleado ent)
+    {
+        var asginar = new AsignacionUniforme
+        {
+            IdUsuario = ent.IdUsuario,
+            IdUniforme = ent.IdUniforme,
+            FechaEntrega= ent.FechaEntrega,
+            FechaDevolucion= ent.FechaDevolucion,
+            Estado= ent.Estado
+        };
+
+        _db.AsignacionUniformes.Add(asginar);
+
+        if (await _db.SaveChangesAsync() == 0) return new NotFound("Algo salio mal");
+        return new Created<AsignacionUniforme>(asginar);
+    }
+
+
+    // listar empleados con uniforme
+    public async Task<IEnumerable<UsuariosUniformes>> listarEmpleadosUniformeAsync()
+    {
+        return await _db.AsignacionUniformes
+                .Select(u => new UsuariosUniformes(
+                    u.IdAsignacionUniforme,
+                    u.IdUsuarioNavigation.NombreUsuario,
+                    u.IdUniformeNavigation.NombreUniforme,
+                    u.IdUniformeNavigation.Talla,
+                    u.FechaEntrega,
+                    u.FechaDevolucion
+                ))
+                .ToListAsync();
+    }
+
+
+    // 
+
+
+
+
+
+
+
+
+
 
 
     

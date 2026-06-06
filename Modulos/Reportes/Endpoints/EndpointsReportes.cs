@@ -76,7 +76,7 @@ public static class EndpointsReportes
                 _ => Results.StatusCode(500)
             };
         })
-        .RequireAuthorization("Gerente")
+        .RequireAuthorization("PersonalAutorizado")
         .WithSummary("Agregar un memorandum");
 
 // ===========================================================================================

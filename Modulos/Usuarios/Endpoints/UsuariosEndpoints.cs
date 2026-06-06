@@ -148,23 +148,18 @@ public static class UsuariosEndpoints
         
 //====================================================================================================
         // Manda archivos de usuarios por id
-        group.MapGet("/VerArchivo/{id:int}/{tipo:int}", async ([FromRoute] int id, [FromRoute] int tipo, IUsuariosLogica modulo) =>
+        group.MapGet("/VerArchivo/{id:int}", async ([FromRoute] int id, [FromRoute] int tipo, IUsuariosLogica modulo, IWebHostEnvironment env) =>
         {
-            var dto = new PedirDocumento(id,tipo);
-            var rutacompleta = await modulo.mandarRutaDeArchivoAsync(dto);
+            var rutacompleta = await modulo.mandarRutaDeArchivoAsync(id);
 
             return rutacompleta switch
             {
-                SuccessM m => Results.File(
-                    path: m.Mensaje,
-                    contentType: "application/pdf",
-                    enableRangeProcessing: true
-                ),
+                SuccessM m => CreateFileStreamResult(m.Mensaje,env),
                 NotFound m => Results.BadRequest(new { error = m.Mensaje }),
                 _ => Results.StatusCode(500)
             };
         })
-        .WithSummary("Manda archivos de usuarios por id")
+        .WithSummary("Manda archivos de usuarios por el id del docuemnto")
         .RequireAuthorization("PersonalAutorizado");
 
 //====================================================================================================
@@ -182,6 +177,15 @@ public static class UsuariosEndpoints
         })
         .WithSummary("Agregar carrera a usuario")
         .RequireAuthorization("PersonalAutorizado");
+//====================================================================================================
+        // Listar los documentos por tipo de un usuario con su idUsuario
+        group.MapGet("/docuemntos/listar", async (PedirDocumentos ent, IUsuariosLogica modulo) =>
+        {
+            var documentos = await modulo.listDocuemntosUsuarioTipoAsync(ent);
+            return documentos.Any() 
+                ? Results.Ok(documentos) 
+                : Results.NotFound(new { mensaje = $"algo salio mal" });
+        });
 
 
 
@@ -196,6 +200,28 @@ public static class UsuariosEndpoints
 
 
 
+
+
+
+    }
+
+    static IResult CreateFileStreamResult(string rutaFisica, IWebHostEnvironment env)
+    {
+        if (!System.IO.File.Exists(rutaFisica))
+        {
+            return Results.NotFound(new { error = "El archivo físico no se encuentra en el servidor." });
+        }
+        string ruta_correcta = Path.Combine(env.ContentRootPath,"AlmacenamientoServidor", "Documentos");
+        if(Path.GetDirectoryName(rutaFisica)!= ruta_correcta) return Results.NotFound(new { error = "El servidor no encontro el archivo"});
+
+
+        var stream = new FileStream(rutaFisica, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        return Results.File(
+            fileStream: stream,
+            contentType: "application/pdf",
+            enableRangeProcessing: true
+        );
     }
     private static IResult CrearCookieSesion(HttpContext context, string token)
     {

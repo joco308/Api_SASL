@@ -21,7 +21,32 @@ public class WebSocketGestor
     {
         var grupo = _grupos.GetOrAdd(rol, _ => new ConcurrentDictionary<string, WebSocket>());
 
-        grupo.AddOrUpdate(usuarioId, socket, (key, oldSocket) => socket);
+        if (grupo.TryRemove(usuarioId, out var oldSocket))
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (oldSocket.State == WebSocketState.Open)
+                    {
+                        // Le avisamos al cliente viejo por qué lo estamos echando
+                        await oldSocket.CloseAsync(
+                            WebSocketCloseStatus.NormalClosure, 
+                            "Se inició sesión en otro dispositivo.", 
+                            CancellationToken.None
+                        );
+                    }
+                }
+                catch (Exception) { /* Ignorar si ya estaba roto */ }
+                finally
+                {
+                    oldSocket.Dispose(); // Liberamos la RAM del socket viejo obligatoriamente
+                }
+            });
+        }
+
+        grupo.TryAdd(usuarioId, socket);
+
         return new Success();
     }
 

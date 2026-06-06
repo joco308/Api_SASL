@@ -30,7 +30,75 @@ public record DatosParaSubirDoc(int idUSer, int? idtipoDoc = null, string? tipoD
 
 public record AñadirCarrera(int idUsuario, int? idCarrera = null, string? Carrera = null);
 
-public record PedirDocumento(int id, int idtipo);
+public record PedirDocumentos(int id, int idtipo);
+
+public record DocumentosUsuarioTipo(int idDoc, string nombre, DateOnly fechaSubido);
+
+public record AñadirCapasitacion(
+    string Nombre,
+    string Descripcion,
+    DateOnly Fecha 
+);
+
+public record PonerUsuarioCapasitacion(
+    int IdUsuario,
+    int IdCapacitacion,
+    string estado
+);
+
+public record ListarCapasitaciones(
+    int IdCapacitacion,
+    string Nombre,
+    string Descripcion,
+    DateOnly Fecha,
+    int inscritos
+);
+
+public record usuarioInscrito(
+    int IdUsuario,
+    string nombre,
+    string estado
+);
+
+public record InfoCapasitacion(
+    int IdCapacitacion,
+    string Nombre,
+    string Descripcion,
+    DateOnly Fecha,
+    usuarioInscrito[] inscritos
+);
+
+public record AñadirUniforme(
+    string NombreUniforme,
+    int Talla,
+    string Descripcion
+);
+
+public record ListarUniformes(
+    int IdUniforme,
+    string NombreUniforme,
+    int Talla,
+    string Descripcion
+);
+
+public record AsignarUniformeEmpleado(
+    int IdUsuario,
+    int IdUniforme,
+    DateOnly FechaEntrega,
+    DateOnly FechaDevolucion,
+    string Estado
+);
+
+public record UsuariosUniformes(
+    int IdAsignacionUniforme,
+    string NombreEmpleado,
+    string NombreUniforme,
+    int Talla,
+    DateOnly FechaEntrega,
+    DateOnly? FechaDevolucion
+);
+
+
 
 // ========================================================================
 //para manejar catalo nada mas!!!!!!!!!!!!!

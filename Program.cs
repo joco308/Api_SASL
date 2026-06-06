@@ -121,6 +121,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return Task.CompletedTask;
             }
         };
+        
     });
 
 builder.Services.AddAuthorization(options =>
@@ -179,6 +180,7 @@ app.MapGet("/Api/Catalogos/{nombre}", async (string nombre, IUsuariosLogica logi
         ? Results.Ok(datos) 
         : Results.NotFound(new { mensaje = $"El catálogo '{nombre}' no existe." });
 })
+.RequireAuthorization()
 .WithSummary("Retorna el ID y Nombre de subdominios filtrados por el nombre del Dominio.");
 
 

@@ -76,6 +76,7 @@ public static class ClientesEndpoints
             var resultado = await modulo.añadirClienteAsync(dto);
             return ManejarResultado(resultado);
         })
+        .RequireAuthorization("PersonalAutorizado")
         .WithSummary("Registra un nuevo cliente.");
     }
 

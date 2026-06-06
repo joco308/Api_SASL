@@ -40,7 +40,7 @@ public class ClientesLogica : IClientesLogica
 
         var codigo = new Random().Next(100000, 999999).ToString();
         
-        cliente.Codigo2fa = codigo;
+        cliente.Codigo2fa = HashPassword(codigo);
         cliente.Expiracion = DateTime.UtcNow.AddMinutes(5);
         cliente.Pediente2fa = true;
 
@@ -80,7 +80,7 @@ public class ClientesLogica : IClientesLogica
         }
 
         // 3. Comparamos los códigos
-        if (cliente.Codigo2fa != login.Codigo) return new ValidationError("Codigo incorrecto.");
+        if (!Verify(cliente.Codigo2fa,login.Codigo)) return new ValidationError("Codigo incorrecto.");
 
 
         //  Creamos los "Claims" (Datos que van dentro del token)

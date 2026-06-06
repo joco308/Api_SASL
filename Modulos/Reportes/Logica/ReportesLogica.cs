@@ -46,10 +46,8 @@ public class ReportesLogica : IReportesLogica
             $"{incidente.descripcion.Substring(0, 10)}...",
             servicio
         );
-
-        await _webSocket.EnviarMensajeGrupoAsync("Gerente", notificacion);        
         
-        return await guardarDatosDB<Incidente>(nincidente);
+        return await guardarDatosDBSendM<Incidente>(nincidente,"Gerente",notificacion);
     }
 
 
@@ -103,7 +101,7 @@ public class ReportesLogica : IReportesLogica
 
         _db.Memorials.Add(memorial);
 
-        return await guardarDatosDB<Memorial>(memorial);
+        return await guardarDatosDBSendM<Memorial>(memorial,"Trabajador",new {idMemorial = memorial.IdMemorial});
     }
 
 
@@ -267,6 +265,24 @@ public class ReportesLogica : IReportesLogica
         {
             var filasAfectadas = await _db.SaveChangesAsync();
             return filasAfectadas > 0 ? new Created<T>(crear) : new NotFound("No se encontró el registro.");
+        }
+        catch (Exception ex) { return new NotFound($"Error {ex.Message}."); }
+    }
+
+    public async Task<IResultadoServicio> guardarDatosDBSendM<T>(T crear,string rol, object mensaje) 
+    {   
+        try 
+        {
+            var filasAfectadas = await _db.SaveChangesAsync();
+            if(filasAfectadas > 0)
+            {
+                await _webSocket.EnviarMensajeGrupoAsync(rol,mensaje);
+                return new Created<T>(crear);
+            }
+            else
+            {
+                return new NotFound("No se encontró el registro.");
+            }
         }
         catch (Exception ex) { return new NotFound($"Error {ex.Message}."); }
     }
