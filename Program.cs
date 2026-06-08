@@ -106,8 +106,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtKey)),
-            NameClaimType = ClaimTypes.Name,
-            RoleClaimType = ClaimTypes.Role
+            RoleClaimType = ClaimTypes.Role,
         };
         options.Events = new JwtBearerEvents  {
             OnMessageReceived = context => 

@@ -34,5 +34,5 @@ public record VerInfoUsuarioId(
     bool ServicioAsignado,
     string[] Carreras,
     int[] telefonos,
-    string consultarDocumentos = "/Api/Usuario/VerArchivo/{id:int}/{tipo:int}"
+    string consultarDocumentos = "/Api/Usuario/Docuemntos/Listar"
 );

@@ -2,6 +2,7 @@ using Api_SASL.Modulos.Servicios.DTO;
 using Api_SASL.Modulos.Servicios.Interfaz;
 using Api_SASL.Modulos.Servicios.Logica;
 using Api_SASL.Servicios.InterfazServicios;
+using Api_SASL.Models;
 using Microsoft.Identity.Client;
 using System.Text;
 using CsvHelper;
@@ -24,7 +25,7 @@ public static class ServiciosEndpoints
 
             return resultado switch
             {
-                Success => Results.Ok(new { mensaje = "Servicio y asignaciones creados correctamente" }),
+                Created<Servicio> m => Results.Created($"/Api/Servicios/{m.Dato.IdServicio}", m.Dato),
                 ValidationError v => Results.BadRequest(new { error = v.Error }),
                 NotFound n => Results.NotFound(new { error = n.Mensaje }),
                 _ => Results.StatusCode(500)
@@ -147,6 +148,57 @@ public static class ServiciosEndpoints
         .WithSummary("Genera y descarga en tiempo real un archivo CSV con la información completa de todos los servivios.")
         .RequireAuthorization("PersonalAutorizado");
 
+
+//=======================================================================================================
+        // Crear servicio terminado
+        group.MapPost("/ServicioTerminado/Nuevo", async (AddServicioTerminado dto, IServiciosLogica modulo) =>
+        {
+            var resultado = await modulo.servicioTerminadoAsync(dto);
+
+            return resultado switch
+            {
+                Created<ServicioTerminado> m => Results.Created($"/Api/Servicios/ServicioTerminado/{m.Dato.IdServicio}", m.Dato),
+                ValidationError v => Results.BadRequest(new { error = v.Error }),
+                NotFound n => Results.NotFound(new { error = n.Mensaje }),
+                _ => Results.StatusCode(500)
+            };
+        })
+        .WithSummary("Crear servicio terminado cuando un servicio termina")
+        .RequireAuthorization("PersonalAutorizado");
+
+//=======================================================================================================
+        // Mostrar horarios disponibles
+        group.MapGet("/horarios", async (IServiciosLogica modulo) =>
+        {
+            var lista = await modulo.mostrarHorariosAsync();
+            return Results.Ok(lista);
+        })
+        .WithSummary("Muestra la lista de horarios disponibles")
+        .RequireAuthorization("PersonalAutorizado");
+
+//=======================================================================================================
+        // Listar servicios terminados (Lista resumida)
+        group.MapGet("/ServicioTerminado", async (IServiciosLogica modulo) =>
+        {
+            var lista = await modulo.listarServicioTerminadosAsync();
+            return Results.Ok(lista);
+        })
+        .WithSummary("Muestra los servicios terminados en forma de lista resumida")
+        .RequireAuthorization("PersonalAutorizado");
+
+
+//=======================================================================================================
+        // Mostrar información detallada de un servicio terminado específico
+        group.MapGet("/ServicioTerminado/{id:int}", async (int id, IServiciosLogica modulo) =>
+        {
+            var servicio = await modulo.infoServicioTerminadoAsync(id);
+            
+            return servicio is not null 
+                ? Results.Ok(servicio) 
+                : Results.NotFound(new { mensaje = $"No se encontró el servicio terminado con ID {id}" });
+        })
+        .WithSummary("Muestra los detalles de un servicio terminado por su id")
+        .RequireAuthorization("PersonalAutorizado");
 
 
     }

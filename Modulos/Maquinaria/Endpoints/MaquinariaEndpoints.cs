@@ -1,6 +1,7 @@
 using Api_SASL.Modulos.Maquinaria.DTO;
 using Api_SASL.Modulos.Maquinaria.Interfaz;
 using Api_SASL.Servicios.InterfazServicios;
+using Api_SASL.Models;
 
 namespace Api_SASL.Modulos.Maquinaria.Endpoints;
 
@@ -38,7 +39,13 @@ public static class MaquinariaEndpoints
         group.MapPost("/", async (AgregarMaquinaria dto, IMaquinariaLogica logica) =>
         {
             var resultado = await logica.añadirMaquinariaAsync(dto);
-            return ManejarResultado(resultado);
+            return resultado switch
+            {
+                Created<Maquinarium> m => Results.Created($"/Api/Maquinaria/mantenimiento/{m.Dato.IdMaquinaria}", m.Dato),
+                ValidationError v => Results.BadRequest(new { error = v.Error }),
+                NotFound n => Results.NotFound(new { error = n.Mensaje }),
+                _ => Results.StatusCode(500)
+            };
         })
         .WithSummary("Añadir una nueva maquinaria")
         .RequireAuthorization("PersonalAutorizado");
@@ -72,6 +79,7 @@ public static class MaquinariaEndpoints
         })
         .WithSummary("Listar estados de calidad (Subdominios)")
         .RequireAuthorization("PersonalAutorizado");
+
 //=======================================================================================================
         // Mostra info de una maquinaria (vercion resumida)
         group.MapGet("/Short{id:int}", async (int id, IMaquinariaLogica logica) =>
@@ -84,17 +92,46 @@ public static class MaquinariaEndpoints
         })
         .WithSummary("Mostra info de una maquinaria (vercion resumida)");
 
+//=======================================================================================================
+        // Añadir mantenimiento a una maquinaria
+        group.MapPost("/mantenimiento", async (AddManteniminetoMaquinaria dto, IMaquinariaLogica logica) =>
+        {
+            var resultado = await logica.manteniminetoMaquinariaAsync(dto);
+            return resultado switch
+            {
+                Created<Mantenimiento> m => Results.Created($"/Api/Maquinaria/mantenimiento/{m.Dato.IdMantenimiento}", m.Dato),
+                ValidationError v => Results.BadRequest(new { error = v.Error }),
+                NotFound n => Results.NotFound(new { error = n.Mensaje }),
+                _ => Results.StatusCode(500)
+            };
+        })
+        .WithSummary("Añadir un mantenimiento y asignarlo a una maquinaria")
+        .RequireAuthorization("PersonalAutorizado");
+
+//=======================================================================================================
+        // Listar mantenimientos
+        group.MapGet("/mantenimiento", async (IMaquinariaLogica logica) =>
+        {
+            var lista = await logica.ListarMantenimintosAsync();
+            return Results.Ok(lista);
+        })
+        .WithSummary("Muestra la lista de mantenimientos")
+        .RequireAuthorization("PersonalAutorizado");
+
+//=======================================================================================================
+        // Mostrar información detallada de un mantenimiento
+        group.MapGet("/mantenimiento/{id:int}", async (int id, IMaquinariaLogica logica) =>
+        {
+            var mantenimiento = await logica.mostrarInfoMantenimintoAsync(id);
+            
+            return mantenimiento is null 
+                ? Results.NotFound(new { mensaje = $"No se encontró el mantenimiento con ID {id}" }) 
+                : Results.Ok(mantenimiento);
+        })
+        .WithSummary("Muestra los detalles de un mantenimiento por su id")
+        .RequireAuthorization("PersonalAutorizado");
 
     }
-
-
-
-   
-
-
-
-
-
 
 
 

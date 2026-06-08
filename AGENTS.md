@@ -12,10 +12,10 @@
 ## Build & run
 ```bash
 dotnet build
-dotnet watch          # hot-reload dev at http://localhost:5112
-dotnet run            # single-run (HTTPS profile also at https://localhost:7102 per launchSettings.json)
+dotnet watch          # hot-reload dev at http://localhost:5112 (http) / https://localhost:7102 (https)
+dotnet run            # single-run (profiles in Properties/launchSettings.json)
 ```
-No tests, lint, typecheck, CI, or pre-commit hooks exist.
+Solution file: `Api_SASL.sln`. No tests, lint, typecheck, CI, or pre-commit hooks exist.
 
 ## Key dependencies
 - **BCrypt.Net-Next** — password hashing

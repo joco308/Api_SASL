@@ -66,3 +66,30 @@ public record HorarioDTO(
     TimeOnly horaEntrada,
     TimeOnly horaSalida
 );
+
+public record AddServicioTerminado(
+    int idServicio,
+    int IdSatidfaccion,
+    string Comentarios
+);
+
+public record ListarServicioTerminado(
+    int IdServicioTerminado,
+    string NombreCliente,
+    string NomnreEmpresa
+);
+
+public record InfoServicioTerminado(
+    int IdServicioTerminado,
+    string NombreCliente,
+    string NombreEmpresa,
+    int NIT,
+    string Direccion,
+    string TipoServicio,
+    DateOnly FechaInicio,
+    DateOnly? FechaFinal,
+    decimal Costo,
+    string? Descripcion,
+    string Satisfaccion,
+    string? Comentarios
+);

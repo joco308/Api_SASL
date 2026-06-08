@@ -27,4 +27,13 @@ public interface IMaquinariaLogica
 
     // mostrar datos de una maquinaria por id (vercion corta para trabajadores y clientes)
     Task<InfoResuminaMaquinara?> mostrarInfoResumidaMaquinaria(int IdMaquinaria);
+
+    // añadir mantenimiento y asignarlo a una maquinaria
+    Task<IResultadoServicio> manteniminetoMaquinariaAsync(AddManteniminetoMaquinaria ent);
+
+    // mostrar info de 1 mantenimiento
+    Task<InfoManteniminto?> mostrarInfoMantenimintoAsync(int IdMantenimiento);
+
+    // listar mantenimintos
+    Task<IEnumerable<ListarManteniminto>> ListarMantenimintosAsync();
 }

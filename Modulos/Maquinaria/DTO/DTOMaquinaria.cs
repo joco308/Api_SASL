@@ -19,3 +19,25 @@ public record MostrarMarcas(int IdMarca, string Pais, string NombreMarca);
 public record Estado(int IdEstado, string estado);
 
 public record InfoResuminaMaquinara(string NombreMAquinaria, string Marca, string? Descripcion);
+
+public record AddManteniminetoMaquinaria(
+    int IdMaquinaria,
+    DateOnly FechaMantenimiento,
+    string Descripcion,
+    decimal Costo
+);
+
+public record InfoManteniminto(
+    int IdMantenimiento,
+    DateOnly FechaMantenimiento,
+    string? Descripcion,
+    decimal Costo,
+    int IdMaquinaria,
+    string NombreMaquinaria
+);
+
+public record ListarManteniminto(
+    int IdMantenimiento,
+    decimal Costo,
+    string NombreMaquinaria
+);

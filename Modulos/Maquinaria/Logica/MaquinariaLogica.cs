@@ -5,16 +5,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Api_SASL.Servicios.InterfazServicios;
 using System.Diagnostics.CodeAnalysis;
+using Api_SASL.Servicios;
 
 namespace Api_SASL.Modulos.Maquinaria.Logica;
 
 public class MaquinariaLogica : IMaquinariaLogica
 {
     public readonly DevSaslContext _db;
+    private readonly WebSocketGestor _ws;
 
-    public MaquinariaLogica(DevSaslContext db)
+    public MaquinariaLogica(DevSaslContext db, WebSocketGestor ws)
     {
         _db = db;
+        _ws = ws;
     }
 
 // -----------------------------------------------------------------------------
@@ -33,7 +36,7 @@ public class MaquinariaLogica : IMaquinariaLogica
     }
 
 // -----------------------------------------------------------------------------
-    // Mostrar informaciond e una amquinaria
+    // Mostrar informacion de una mquinaria
     public async Task<InfoMaquinaria?> informacionMaquinarioAsync(int Id_Maquinaria)
     {
         return await _db.Maquinaria
@@ -139,6 +142,68 @@ public class MaquinariaLogica : IMaquinariaLogica
             ).FirstOrDefaultAsync();
     }
 
+// -----------------------------------------------------------------------------
+    // maneteniminto maquinaria
+    public async Task<IResultadoServicio> manteniminetoMaquinariaAsync(AddManteniminetoMaquinaria ent)
+    {
+        var mantenimiento = new Mantenimiento
+        {
+            FechaMantenimiento = ent.FechaMantenimiento,
+            Descripcion = ent.Descripcion,
+            Costo = ent.Costo
+        };
+
+        _db.Mantenimientos.Add(mantenimiento);
+
+        var maquinaria_manteniminto = new MantenimientosMaquinarium
+        {
+            IdMaquinaria = ent.IdMaquinaria,
+            IdMantenimientoNavigation = mantenimiento
+        };
+
+        _db.MantenimientosMaquinaria.Add(maquinaria_manteniminto);
+
+        return await guardarCambiosAsync<MantenimientosMaquinarium>(maquinaria_manteniminto);
+    }
+
+// -----------------------------------------------------------------------------
+    // info de un manteniminto
+    public async Task<InfoManteniminto?> mostrarInfoMantenimintoAsync(int IdMantenimiento)
+    {
+        return await _db.Mantenimientos
+                .Where(u => u.IdMantenimiento == IdMantenimiento)
+                .Select(u => new InfoManteniminto(
+                    u.IdMantenimiento,
+                    u.FechaMantenimiento,
+                    u.Descripcion,
+                    u.Costo,
+                    _db.MantenimientosMaquinaria
+                        .Where(t => t.IdMantenimiento == IdMantenimiento)
+                        .Select(t => t.IdMaquinaria)
+                        .FirstOrDefault(),
+                    _db.MantenimientosMaquinaria
+                        .Where(t => t.IdMantenimiento == IdMantenimiento)
+                        .Select(t => t.IdMaquinariaNavigation.NombreMaquinaria)
+                        .FirstOrDefault()!
+                ))
+                .FirstOrDefaultAsync();
+    }
+
+// -----------------------------------------------------------------------------
+    // listar mantenimintos
+    public async Task<IEnumerable<ListarManteniminto>> ListarMantenimintosAsync()
+    {
+        return await _db.Mantenimientos
+                .Select(u => new ListarManteniminto(
+                    u.IdMantenimiento,
+                    u.Costo,
+                    _db.MantenimientosMaquinaria
+                        .Where(t => t.IdMantenimiento == u.IdMantenimiento)
+                        .Select(u => u.IdMaquinariaNavigation.NombreMaquinaria)
+                        .FirstOrDefault()!
+                ))
+                .ToListAsync();
+    }
 
 
 
@@ -168,6 +233,27 @@ public class MaquinariaLogica : IMaquinariaLogica
             
             // Si es 0, no se modificó nada (por ejemplo, el registro no existía)
             return new NotFound("No se encontró el registro para actualizar.");
+        }
+        catch (DbUpdateException) 
+        {
+            // Captura errores de claves duplicadas, nulos, o restricciones
+            return new NotFound("Error de validación al guardar en la base de datos.");
+        }
+    }
+    public async Task<IResultadoServicio> guardarCambiosAsync<T>(T obj) 
+    {
+        try 
+        {
+            var filasAfectadas = await _db.SaveChangesAsync();
+            
+            // Si se modificó al menos una fila, la operación fue un éxito
+            if (filasAfectadas > 0)
+            {
+                return new Created<T>(obj); 
+            }
+            
+            // Si es 0, no se modificó nada (por ejemplo, el registro no existía)
+            return new NotFound("No se pudo crear.");
         }
         catch (DbUpdateException) 
         {

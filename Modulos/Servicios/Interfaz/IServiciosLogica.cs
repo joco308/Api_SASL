@@ -12,21 +12,30 @@ public interface IServiciosLogica
     // Mostrar Servicios
     Task<IEnumerable<ListarServicio>> mostrarServiciosAsync();
 
-    //Mostrar informacion de un servicio
+    // Mostrar informacion de un servicio
     Task<InfoServicio?> informacionServicioAsync(int idServicio);
 
-    // asignar empleado con servicio
+    // Asignar empleado con servicio
     Task<IResultadoServicio> asignarEmpleadoServicioAsync(AsignarUsuariosServicios entrada);
 
-    // asignar Maquinaria con servicio
+    // Asignar Maquinaria con servicio
     Task<IResultadoServicio> asignarMaquinariaServicioAsync(AsignarMaquinariaServicios entrada);
 
-    // asignar recurso con servicio
+    // Asignar recurso con servicio
     Task<IResultadoServicio> asignarRecursoServicioAsync(AsignarRecursoServicios entrada);
 
-    // mostrar horarios
+    // Mostrar horarios
     Task<IEnumerable<HorarioDTO>> mostrarHorariosAsync();
 
-    // descargar archivo csv
+    // Descargar archivo csv
     Task<IEnumerable<InfoServicio>> datosServicioParaCSVAsync();
+
+    // Servicio terminado
+    Task<IResultadoServicio> servicioTerminadoAsync(AddServicioTerminado ent);
+
+    // Listar servicios temrinados
+    Task<IEnumerable<ListarServicioTerminado>> listarServicioTerminadosAsync();
+
+    // Mostrar info de Servicio terminado
+    Task<InfoServicioTerminado?> infoServicioTerminadoAsync(int idServicio);
 }

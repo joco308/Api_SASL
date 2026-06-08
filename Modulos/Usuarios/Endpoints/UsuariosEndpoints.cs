@@ -179,7 +179,7 @@ public static class UsuariosEndpoints
         .RequireAuthorization("PersonalAutorizado");
 //====================================================================================================
         // Listar los documentos por tipo de un usuario con su idUsuario
-        group.MapGet("/docuemntos/listar", async (PedirDocumentos ent, IUsuariosLogica modulo) =>
+        group.MapGet("/Docuemntos/Listar", async (PedirDocumentos ent, IUsuariosLogica modulo) =>
         {
             var documentos = await modulo.listDocuemntosUsuarioTipoAsync(ent);
             return documentos.Any() 

@@ -3,9 +3,7 @@ using Api_SASL.Modulos.Servicios.Interfaz;
 using Api_SASL.Servicios.InterfazServicios;
 using Api_SASL.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
+
 
 namespace Api_SASL.Modulos.Servicios.Logica;
 public class ServiciosLogica : IServiciosLogica
@@ -46,7 +44,7 @@ public class ServiciosLogica : IServiciosLogica
 
         _db.Servicios.Add(servicio);
 
-        return await guardarDatosDB();
+        return await guardarDatosDB<Servicio>(servicio);
     }
 
 
@@ -223,6 +221,58 @@ public class ServiciosLogica : IServiciosLogica
     }
     
 
+    // servicio terminado
+    public async Task<IResultadoServicio> servicioTerminadoAsync(AddServicioTerminado ent)
+    {
+        var servicioterminado = new ServicioTerminado
+        {
+            IdServicio = ent.idServicio,
+            Satisfaccion = ent.IdSatidfaccion,
+            Comentarios = ent.Comentarios
+        };
+
+        _db.ServicioTerminados.Add(servicioterminado);
+
+        return await guardarDatosDB<ServicioTerminado>(servicioterminado);
+    }
+
+
+    // listar servicios terminado 
+    public async Task<IEnumerable<ListarServicioTerminado>> listarServicioTerminadosAsync()
+    {
+        return await _db.ServicioTerminados
+                .Select(u => new ListarServicioTerminado(
+                    u.IdServicioTerminado,
+                    u.IdServicioNavigation.IdClienteNavigation.NombreCliente,
+                    u.IdServicioNavigation.IdClienteNavigation.IdEmpresaNavigation.Detalle
+                ))
+                .ToListAsync();
+    }
+
+
+    // info de servicio terminado
+    public async Task<InfoServicioTerminado?> infoServicioTerminadoAsync(int idServicio)
+    {
+        return await _db.ServicioTerminados
+                .Where(u => u.IdServicio == idServicio)
+                .Select(u => new InfoServicioTerminado(
+                    u.IdServicioTerminado,
+                    u.IdServicioNavigation.IdClienteNavigation.NombreCliente,
+                    u.IdServicioNavigation.IdClienteNavigation.IdEmpresaNavigation.Detalle,
+                    u.IdServicioNavigation.IdClienteNavigation.Nit,
+                    $"Zona: {u.IdServicioNavigation.IdDireccionNavigation.IdZonaNavigation.Detalle}, Calle: {u.IdServicioNavigation.IdDireccionNavigation.Calle}, N°: {u.IdServicioNavigation.IdDireccionNavigation.Ncasa}",
+                    u.IdServicioNavigation.TipoServicioNavigation.Detalle,
+                    u.IdServicioNavigation.FechaInicio,
+                    u.IdServicioNavigation.FechaFinal,
+                    u.IdServicioNavigation.Costo,
+                    u.IdServicioNavigation.Descripcion,
+                    u.SatisfaccionNavigation.Detalle,
+                    u.Comentarios
+                ))
+                .FirstOrDefaultAsync();
+    }
+
+
 
 
 
@@ -247,6 +297,27 @@ public class ServiciosLogica : IServiciosLogica
             
             // Si es 0, no se modificó nada (por ejemplo, el registro no existía)
             return new NotFound("No se encontró el registro para actualizar.");
+        }
+        catch (DbUpdateException) 
+        {
+            // Captura errores de claves duplicadas, nulos, o restricciones
+            return new NotFound("Error de validación al guardar en la base de datos.");
+        }
+    }
+    public async Task<IResultadoServicio> guardarDatosDB<T>(T obj) 
+    {
+        try 
+        {
+            var filasAfectadas = await _db.SaveChangesAsync();
+            
+            // Si se modificó al menos una fila, la operación fue un éxito
+            if (filasAfectadas > 0)
+            {
+                return new Created<T>(obj); 
+            }
+            
+            // Si es 0, no se modificó nada (por ejemplo, el registro no existía)
+            return new NotFound("No se pudo crear.");
         }
         catch (DbUpdateException) 
         {
