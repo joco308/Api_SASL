@@ -27,6 +27,8 @@ public partial class DevSaslContext : DbContext
 
     public virtual DbSet<Cliente> Clientes { get; set; }
 
+    public virtual DbSet<Cobro> Cobros { get; set; }
+
     public virtual DbSet<Direccion> Direccions { get; set; }
 
     public virtual DbSet<DocumentosUsuario> DocumentosUsuarios { get; set; }
@@ -51,7 +53,11 @@ public partial class DevSaslContext : DbContext
 
     public virtual DbSet<Memorial> Memorials { get; set; }
 
+    public virtual DbSet<Pago> Pagos { get; set; }
+
     public virtual DbSet<Provedore> Provedores { get; set; }
+
+    public virtual DbSet<Qr> Qrs { get; set; }
 
     public virtual DbSet<Recurso> Recursos { get; set; }
 
@@ -74,7 +80,6 @@ public partial class DevSaslContext : DbContext
     public virtual DbSet<UsuarioTrabajador> UsuarioTrabajadors { get; set; }
 
     public virtual DbSet<UsuariosCapacitacione> UsuariosCapacitaciones { get; set; }
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -190,6 +195,34 @@ public partial class DevSaslContext : DbContext
                 .HasForeignKey(d => d.IdEmpresa)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Cliente_Empresa");
+        });
+
+        modelBuilder.Entity<Cobro>(entity =>
+        {
+            entity.HasKey(e => e.IdCobro).HasName("PK__Cobros__D0B0CD00AF495FE0");
+
+            entity.Property(e => e.CreateAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("create_at");
+            entity.Property(e => e.Monto).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.UpdateAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("update_at");
+
+            entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.Cobros)
+                .HasForeignKey(d => d.IdCliente)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Cobro_Cliente");
+
+            entity.HasOne(d => d.IdQrNavigation).WithMany(p => p.Cobros)
+                .HasForeignKey(d => d.IdQr)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Cobro_Qr");
+
+            entity.HasOne(d => d.IdServicioNavigation).WithMany(p => p.Cobros)
+                .HasForeignKey(d => d.IdServicio)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Cobro_Servicio");
         });
 
         modelBuilder.Entity<Direccion>(entity =>
@@ -386,6 +419,26 @@ public partial class DevSaslContext : DbContext
                 .HasConstraintName("FK_Memorial_Empleado");
         });
 
+        modelBuilder.Entity<Pago>(entity =>
+        {
+            entity.HasKey(e => e.IdPago).HasName("PK__Pago__FC851A3A41F294BD");
+
+            entity.ToTable("Pago");
+
+            entity.Property(e => e.CreateAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("create_at");
+            entity.Property(e => e.Descripcion).HasMaxLength(200);
+            entity.Property(e => e.UpdateAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("update_at");
+
+            entity.HasOne(d => d.IdCobroNavigation).WithMany(p => p.Pagos)
+                .HasForeignKey(d => d.IdCobro)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Pago_Cobro");
+        });
+
         modelBuilder.Entity<Provedore>(entity =>
         {
             entity.HasKey(e => e.IdProveedor);
@@ -404,6 +457,27 @@ public partial class DevSaslContext : DbContext
                 .HasForeignKey(d => d.IdProducto)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Provedore_Producto");
+        });
+
+        modelBuilder.Entity<Qr>(entity =>
+        {
+            entity.HasKey(e => e.IdQr).HasName("PK__QR__B77022E2D3F85475");
+
+            entity.ToTable("QR");
+
+            entity.Property(e => e.CreateAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("create_at");
+            entity.Property(e => e.Descripcion).HasMaxLength(200);
+            entity.Property(e => e.RutaServidor).HasMaxLength(200);
+            entity.Property(e => e.UpdateAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("update_at");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Qrs)
+                .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Qr_Usuario");
         });
 
         modelBuilder.Entity<Recurso>(entity =>

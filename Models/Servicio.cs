@@ -31,6 +31,8 @@ public partial class Servicio
 
     public virtual ICollection<AsignacionRecurso> AsignacionRecursos { get; set; } = new List<AsignacionRecurso>();
 
+    public virtual ICollection<Cobro> Cobros { get; set; } = new List<Cobro>();
+
     public virtual Cliente IdClienteNavigation { get; set; } = null!;
 
     public virtual Direccion IdDireccionNavigation { get; set; } = null!;

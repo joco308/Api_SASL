@@ -40,3 +40,19 @@ public record NotificarIncidente(
     string descripcionResumina,
     int IdServicio
 );
+
+public record EstadoMaquinaria(
+    int IdMaquinaria,
+    int idEstadoCalidad,
+    string? descripcion
+);
+
+public record ListHistorialEstadoMaquinaria(
+    int IdHistorial,
+    int IdMaquinaria,
+    string NombreMaquinaria,
+    string CodigoINV,
+    string EstadoCalidad,
+    DateTime FechaCambio,
+    string? Descripcion
+);

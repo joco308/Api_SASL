@@ -101,7 +101,7 @@ public class ReportesLogica : IReportesLogica
 
         _db.Memorials.Add(memorial);
 
-        return await guardarDatosDBSendM<Memorial>(memorial,"Trabajador",new {idMemorial = memorial.IdMemorial});
+        return await guardarCambiosEnviarMensajeAsync<Memorial>(memorial,"Trabajador",memorial.IdEmpleado.ToString(),new {idMemorial = memorial.IdMemorial, mensaje="Te llego Memorandum"});
     }
 
 
@@ -232,6 +232,47 @@ public class ReportesLogica : IReportesLogica
         }
     }
 
+    // actualizar estado de maquinaria
+    public async Task<IResultadoServicio> reporteEstadoMaquinariaAsync(EstadoMaquinaria ent)
+    {
+        var maquinaria = await _db.Maquinaria.FindAsync(ent.IdMaquinaria);
+        if(maquinaria is null) return new ValidationError("No se encontro esa maquinaria");
+
+        var estado = await _db.EstadoCalidads.FindAsync(ent.idEstadoCalidad);
+        if(estado is null) return new ValidationError("No se encontro ese estado de calidad");
+
+        var historial = new HistorialEstadoMaquina
+        {
+            IdMaquinariaNavigation = maquinaria,
+            IdEstadoCalidadNavigation = estado,
+            FechaCambio = DateTime.Now,
+            Descripcion = ent.descripcion
+        };
+
+        _db.HistorialEstadoMaquinas.Add(historial);
+        
+        return await guardarDatosDBSendM<HistorialEstadoMaquina>(historial,"Administrador",new {mensaje = "Se actualizo el estado de la maquinaria", IdHistorialMaquinaria = historial.IdHistorial});
+    }
+
+
+    // listar historial de estado de calidad
+    public async Task<IEnumerable<ListHistorialEstadoMaquinaria>> ListHistorialsAsync()
+    {
+        return await _db.HistorialEstadoMaquinas
+                .Select(u => new ListHistorialEstadoMaquinaria(
+                    u.IdHistorial,
+                    u.IdMaquinaria,
+                    u.IdMaquinariaNavigation.NombreMaquinaria,
+                    u.IdMaquinariaNavigation.CodigoInv,
+                    u.IdEstadoCalidadNavigation.EstadoCalidad1,
+                    u.FechaCambio,
+                    u.Descripcion
+                ))
+                .ToListAsync();
+    }
+
+
+
 
 
 
@@ -285,5 +326,23 @@ public class ReportesLogica : IReportesLogica
             }
         }
         catch (Exception ex) { return new NotFound($"Error {ex.Message}."); }
+    }
+
+    private async Task<IResultadoServicio> guardarCambiosEnviarMensajeAsync<T>(T obj, string rol, string idUsuario, object mensaje)
+    {
+        try
+        {
+            var filas = await _db.SaveChangesAsync();
+            if(filas > 0)
+            {
+                await _webSocket.EnviarMensajeUserEspesificoAsync(rol, idUsuario, mensaje);
+                return new Created<T>(obj);
+            }
+                return new NotFound("No se pudo crear.");
+        }
+        catch (DbUpdateException)
+        {
+            return new NotFound("Error de validación al guardar en la base de datos.");
+        }
     }
 }

@@ -1,10 +1,13 @@
 using Api_SASL.Models;
 using Api_SASL.Modulos.Reportes.DTO;
 using Api_SASL.Modulos.Reportes.Interfaz;
-using Api_SASL.Servicios.InterfazServicios;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Api_SASL.Servicios.InterfazServicios;
+using System.Text;
+using CsvHelper;
+using System.Globalization;
 
 namespace Api_SASL.Modulos.Reportes.Endpoints;
 
@@ -102,9 +105,70 @@ public static class EndpointsReportes
         })
         .RequireAuthorization()
         .WithSummary("Ver memorandum (Generar PDF)");
-    
-    
+
+// ===========================================================================================
+        // Reportar estado de maquinaria
+        group.MapPost("/estado-maquinaria", async (
+            [FromBody] EstadoMaquinaria dto,
+            IReportesLogica logica) =>
+        {
+            var resultado = await logica.reporteEstadoMaquinariaAsync(dto);
+            return resultado switch
+            {
+                Created<HistorialEstadoMaquina> d => Results.Created("/Api/Reportes/estado-maquinaria", d.Dato),
+                ValidationError v => Results.BadRequest(new { error = v.Error }),
+                NotFound n => Results.NotFound(new { error = n.Mensaje }),
+                _ => Results.StatusCode(500)
+            };
+        })
+        .RequireAuthorization("PersonalAutorizado")
+        .WithSummary("Reportar estado de maquinaria");
+
+// ===========================================================================================
+        // Listar historial de estado de maquinaria
+        group.MapGet("/estado-maquinaria", async (IReportesLogica logica) =>
+        {
+            var lista = await logica.ListHistorialsAsync();
+            return Results.Ok(lista);
+        })
+        .RequireAuthorization("PersonalAutorizado")
+        .WithSummary("Listar historial de estado de maquinaria");
+
+// ===========================================================================================
+        // descargar csv historial de estado de maquinaria
+        group.MapGet("/exportar-csv", async (IReportesLogica logica) =>
+        {
+            var hostorial = await logica.ListHistorialsAsync();
+
+            if (!hostorial.Any())
+            {
+                return Results.NotFound(new { mensaje = "No hay datos disponibles para exportar." });
+            }
+
+            // Flujo en memoria RAM para armar el archivo sobre la marcha
+            var memoryStream = new MemoryStream();
+            using (var writer = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true))
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                // Agregamos la instrucción especial para que Excel no rompa las columnas
+                await writer.WriteLineAsync("sep=,");
+                
+                await csv.WriteRecordsAsync(hostorial);
+                await writer.FlushAsync();
+            }
+
+            // Rebobinamos el puntero al inicio
+            memoryStream.Position = 0;
+
+            return Results.File(
+                fileStream: memoryStream,
+                contentType: "text/csv",
+                fileDownloadName: $"Reporte_hostorial_{DateTime.Now:yyyyMMdd}.csv"
+            );
+        })
+        .WithSummary("Genera y descarga en tiempo real un archivo CSV con la información completa de el historial de estado de maquinaria.")
+        .RequireAuthorization("PersonalAutorizado");
+
+
     }
-
-
 }

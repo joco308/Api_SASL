@@ -61,6 +61,8 @@ public partial class UsuarioTrabajador
 
     public virtual ICollection<Memorial> Memorials { get; set; } = new List<Memorial>();
 
+    public virtual ICollection<Qr> Qrs { get; set; } = new List<Qr>();
+
     public virtual ICollection<TelefonoUsuario> TelefonoUsuarios { get; set; } = new List<TelefonoUsuario>();
 
     public virtual ICollection<UsuariosCapacitacione> UsuariosCapacitaciones { get; set; } = new List<UsuariosCapacitacione>();

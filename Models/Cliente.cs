@@ -29,6 +29,8 @@ public partial class Cliente
 
     public bool? Pediente2fa { get; set; }
 
+    public virtual ICollection<Cobro> Cobros { get; set; } = new List<Cobro>();
+
     public virtual Direccion IdDireccionNavigation { get; set; } = null!;
 
     public virtual SubDominio IdEmpresaNavigation { get; set; } = null!;

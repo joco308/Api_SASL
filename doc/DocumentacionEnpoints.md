@@ -377,6 +377,39 @@ interface AsignarUsuariosServicios {
   HoraDeSalida?: string | null;    // "HH:mm"
   DiasLaborales?: string | null;
 }
+
+interface AddServicioTerminado {
+  idServicio: number;
+  IdSatidfaccion: number;
+  Comentarios: string;
+}
+
+interface HorarioDTO {
+  idhorario: number;
+  horaEntrada: string;       // "HH:mm"
+  horaSalida: string;        // "HH:mm"
+}
+
+interface ListarServicioTerminado {
+  IdServicioTerminado: number;
+  NombreCliente: string;
+  NomnreEmpresa: string;
+}
+
+interface InfoServicioTerminado {
+  IdServicioTerminado: number;
+  NombreCliente: string;
+  NombreEmpresa: string;
+  NIT: number;
+  Direccion: string;
+  TipoServicio: string;
+  FechaInicio: string;       // "yyyy-MM-dd"
+  FechaFinal: string | null; // "yyyy-MM-dd"
+  Costo: number;
+  Descripcion: string | null;
+  Satisfaccion: string;
+  Comentarios: string | null;
+}
 ```
 
 ---
@@ -535,6 +568,100 @@ Exporta servicios a CSV.
 
 ---
 
+### `POST /Api/Servicios/ServicioTerminado/Nuevo`
+Crea un registro de servicio terminado cuando un servicio finaliza.
+
+- **Auth:** `PersonalAutorizado`
+- **Cuerpo:**
+```json
+{
+  "idServicio": 1,
+  "IdSatidfaccion": 2,
+  "Comentarios": "Servicio completado satisfactoriamente"
+}
+```
+- **Respuesta 201:**
+```json
+{
+  "idServicio": 1,
+  "IdSatidfaccion": 2,
+  "Comentarios": "Servicio completado satisfactoriamente"
+}
+```
+- **Error 400:**
+```json
+{ "error": "Datos inválidos" }
+```
+- **Error 404:**
+```json
+{ "error": "No se encontró el servicio" }
+```
+
+---
+
+### `GET /Api/Servicios/horarios`
+Lista de horarios disponibles.
+
+- **Auth:** `PersonalAutorizado`
+- **Respuesta 200:**
+```json
+[
+  {
+    "idhorario": 1,
+    "horaEntrada": "08:00",
+    "horaSalida": "17:00"
+  }
+]
+```
+
+---
+
+### `GET /Api/Servicios/ServicioTerminado`
+Lista resumida de servicios terminados.
+
+- **Auth:** `PersonalAutorizado`
+- **Respuesta 200:**
+```json
+[
+  {
+    "IdServicioTerminado": 1,
+    "NombreCliente": "Empresa ABC",
+    "NomnreEmpresa": "ABC SRL"
+  }
+]
+```
+
+---
+
+### `GET /Api/Servicios/ServicioTerminado/{id}`
+Información detallada de un servicio terminado.
+
+- **Auth:** `PersonalAutorizado`
+- **Parámetro ruta:** `id` (number)
+- **Respuesta 200:**
+```json
+{
+  "IdServicioTerminado": 1,
+  "NombreCliente": "María García",
+  "NombreEmpresa": "ABC SRL",
+  "NIT": 123456,
+  "Direccion": "Zona Central, Calle Bolívar N° 150",
+  "TipoServicio": "Limpieza",
+  "FechaInicio": "2025-06-01",
+  "FechaFinal": "2025-12-31",
+  "Costo": 15000.00,
+  "Descripcion": "Servicio de limpieza general",
+  "Satisfaccion": "Buena",
+  "Comentarios": "Servicio completado"
+}
+```
+- **Error 404:**
+```json
+{ "mensaje": "No se encontró el servicio terminado con ID 1" }
+```
+
+---
+
 # 3. Maquinaria — `/Api/Maquinaria`
 
 ## Tipos de datos (TypeScript)
@@ -599,6 +726,28 @@ interface InfoResumidaMaquinaria {
   NombreMAquinaria: string;
   Marca: string;
   Descripcion: string | null;
+}
+
+interface AddManteniminetoMaquinaria {
+  IdMaquinaria: number;
+  FechaMantenimiento: string;  // "yyyy-MM-dd"
+  Descripcion: string;
+  Costo: number;
+}
+
+interface ListarManteniminto {
+  IdMantenimiento: number;
+  Costo: number;
+  NombreMaquinaria: string;
+}
+
+interface InfoManteniminto {
+  IdMantenimiento: number;
+  FechaMantenimiento: string;  // "yyyy-MM-dd"
+  Descripcion: string | null;
+  Costo: number;
+  IdMaquinaria: number;
+  NombreMaquinaria: string;
 }
 ```
 
@@ -728,6 +877,70 @@ Información resumida de una maquinaria (público).
 - **Error 404:**
 ```json
 { "mensaje": "No se encontró maquinaria con ID 5" }
+```
+
+---
+
+### `POST /Api/Maquinaria/mantenimiento`
+Registra un mantenimiento y lo asigna a una maquinaria.
+
+- **Auth:** `PersonalAutorizado`
+- **Cuerpo:**
+```json
+{
+  "IdMaquinaria": 3,
+  "FechaMantenimiento": "2025-08-15",
+  "Descripcion": "Cambio de aceite y filtros",
+  "Costo": 450.00
+}
+```
+- **Respuesta 200:**
+```json
+{ "mensaje": "Operación realizada con éxito" }
+```
+- **Error 400:**
+```json
+{ "error": "Datos inválidos" }
+```
+
+---
+
+### `GET /Api/Maquinaria/mantenimiento`
+Lista resumida de mantenimientos registrados.
+
+- **Auth:** `PersonalAutorizado`
+- **Respuesta 200:**
+```json
+[
+  {
+    "IdMantenimiento": 1,
+    "Costo": 450.00,
+    "NombreMaquinaria": "Taladro Industrial"
+  }
+]
+```
+
+---
+
+### `GET /Api/Maquinaria/mantenimiento/{id}`
+Información detallada de un mantenimiento.
+
+- **Auth:** `PersonalAutorizado`
+- **Parámetro ruta:** `id` (number)
+- **Respuesta 200:**
+```json
+{
+  "IdMantenimiento": 1,
+  "FechaMantenimiento": "2025-08-15",
+  "Descripcion": "Cambio de aceite y filtros",
+  "Costo": 450.00,
+  "IdMaquinaria": 3,
+  "NombreMaquinaria": "Taladro Industrial"
+}
+```
+- **Error 404:**
+```json
+{ "mensaje": "No se encontró el mantenimiento con ID 1" }
 ```
 
 ---

@@ -90,7 +90,8 @@ public static class MaquinariaEndpoints
                 ? Results.NotFound(new { mensaje = $"No se encontró maquinaria con ID {id}" }) 
                 : Results.Ok(maquinaria);
         })
-        .WithSummary("Mostra info de una maquinaria (vercion resumida)");
+        .WithSummary("Mostra info de una maquinaria (vercion resumida)")
+        .RequireAuthorization();
 
 //=======================================================================================================
         // Añadir mantenimiento a una maquinaria

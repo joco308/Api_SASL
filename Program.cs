@@ -32,6 +32,9 @@ using Api_SASL.Modulos.Reportes.Interfaz;
 using Api_SASL.Modulos.Clientes.Interfaz;
 using Api_SASL.Modulos.Clientes.Logica;
 using Api_SASL.Modulos.Clientes.Endpoints;
+using Api_SASL.Modulos.Cobros.Interfaz;
+using Api_SASL.Modulos.Cobros.Logica;
+using Api_SASL.Modulos.Cobros.Endpoints;
 using QuestPDF.Infrastructure;
 using System.Net.WebSockets;
 
@@ -92,6 +95,9 @@ builder.Services.AddScoped<IReportesLogica, ReportesLogica>();
 // inyectamos modulo clientes
 builder.Services.AddScoped<IClientesLogica, ClientesLogica>();
 
+// inyectamos modulo cobros
+builder.Services.AddScoped<ICobrosLogica, CobrosLogica>();
+
 var jwtKey = builder.Configuration["Jwt:Key"] 
     ?? throw new InvalidOperationException("La clave JWT no está configurada en appsettings.");
 // configurar la autenteticacion con el token
@@ -129,6 +135,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Gerente", "Administrador")); 
     options.AddPolicy("Cliente", policy => 
         policy.RequireRole("Cliente"));
+    options.AddPolicy("Trabajador", policy =>
+        policy.RequireRole("Trabajador"));
 });
 
 // webSocket inceatamos la clase
@@ -167,6 +175,7 @@ app.MapProveedoresEndpoints();
 app.MapTrabajadoresEndpoints();
 app.MapReportesEndpoints();
 app.MapClientesEndpoints();
+app.MapCobrosEndpoints();
 
 
 // tener los Sub dominios 

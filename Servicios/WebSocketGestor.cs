@@ -94,13 +94,45 @@ public class WebSocketGestor
             }
             catch (Exception ex)
             {
-                return new NotFound($"algo salio mal {ex}");
+                return new NotFound($"algo salio mal {ex.Message}");
             }
             finally
             {
                 _semaforoEnvio.Release();
             }
         }
+
+        return new Success();
+    }
+
+    // EENVIAR MENSAJE ESPESIFICO GRUPO 
+    public async Task<IResultadoServicio> EnviarMensajeUserEspesificoAsync(string rol, string idUsuario, object mensaje)
+    {
+        // Buscamos si el usuario está actualmente online
+        if (!_grupos.TryGetValue(rol, out var grupo)) return new NotFound("No se encontro el grupo"); 
+        if (!grupo.TryGetValue(idUsuario, out var socket)) return new NotFound("No se encontro el grupo"); 
+
+
+        if (socket.State != WebSocketState.Open) return new NotFound("No esta abierto el socket");
+
+        string jsonTexto = JsonSerializer.Serialize(mensaje);
+        var bytes = Encoding.UTF8.GetBytes(jsonTexto);
+        var buffer = new ArraySegment<byte>(bytes, 0, bytes.Length);
+
+        await _semaforoEnvio.WaitAsync();
+        try
+        {
+            await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            return new NotFound($"algo salio mal {ex.Message}");
+        }
+        finally
+        {
+            _semaforoEnvio.Release();
+        }
+        
 
         return new Success();
     }
