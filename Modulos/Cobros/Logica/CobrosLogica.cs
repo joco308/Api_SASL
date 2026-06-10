@@ -226,6 +226,27 @@ public class CobrosLogica : ICobrosLogica
         return await _ws.EnviarMensajeGrupoAsync("Administrador",dto);
     }
 
+    // Cobro cliente
+    public async Task<InfoCobroCliente?> infoCobroClienteAsync(ClaimsPrincipal user, int IdCobro)
+    {
+        int IdCliente = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        return await _db.Cobros
+                .Where(u => u.IdCliente == IdCliente && u.IdCobro == IdCobro)
+                .Select(u => new InfoCobroCliente(
+                    u.IdCobro,
+                    u.IdServicioNavigation.TipoServicioNavigation.Detalle,
+                    u.IdClienteNavigation.NombreCliente,
+                    u.IdClienteNavigation.IdEmpresaNavigation.Detalle,
+                    u.Monto,
+                    u.IdQr,
+                    u.IdQrNavigation.FechaEmitida,
+                    u.IdQrNavigation.FechaExpiracion,
+                    u.IdQrNavigation.Descripcion
+                ))
+                .FirstOrDefaultAsync();
+    }
+
 
 
 

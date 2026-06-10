@@ -36,4 +36,7 @@ public interface ICobrosLogica
     // Notificar pago realizado
     Task<IResultadoServicio> notificarPagoRealizadoAsync(int IdCobro, ClaimsPrincipal user);
 
+    // Info cobro para cliente
+    Task<InfoCobroCliente?> infoCobroClienteAsync(ClaimsPrincipal user, int IdCobro);
+
 }

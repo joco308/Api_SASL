@@ -70,3 +70,16 @@ public record PagoRealizado(
     int IdCliente,
     int IdCobro
 );
+
+public record InfoCobroCliente(
+    int IdCobro,
+    string TipoServicio,
+    string NombreCliente,
+    string NombreEmpresa,
+    decimal? Monto,
+    int IdQr,
+    DateTime FechaEmitida,
+    DateTime FechaExpiracion,
+    string? Descripcion,
+    string consulta = "Consulta Info del qr"
+);

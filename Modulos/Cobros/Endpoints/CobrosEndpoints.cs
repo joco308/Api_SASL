@@ -36,6 +36,18 @@ public static class CobrosEndpoints
         .RequireAuthorization("PersonalAutorizado");
 
         // ====================================================================
+        // Información detallada de un cobro de usuario autenticado
+        group.MapGet("/mis-cobros/{id:int}", async ([FromRoute] int id, ICobrosLogica logica, ClaimsPrincipal user) =>
+        {
+            var cobro = await logica.infoCobroClienteAsync(user, id);
+            return cobro is not null
+                ? Results.Ok(cobro)
+                : Results.NotFound(new { mensaje = $"No se encontró el cobro con ID {id}" });
+        })
+        .WithSummary("Detalles de un cobro por su ID.")
+        .RequireAuthorization("Cliente");
+
+        // ====================================================================
         // Listar cobros del cliente autenticado
         group.MapGet("/mis-cobros", async (ClaimsPrincipal user, ICobrosLogica logica) =>
         {
@@ -64,7 +76,7 @@ public static class CobrosEndpoints
             var resultado = await logica.registrarPagoAsync(dto);
             return ManejarResultado(resultado);
         })
-        .WithSummary("Registra un pago asociado a un cobro.")
+        .WithSummary("Registra un cobro asociado a un pago.")
         .RequireAuthorization("PersonalAutorizado");
 
         // ====================================================================
