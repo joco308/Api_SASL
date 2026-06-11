@@ -71,46 +71,43 @@ public class WebSocketGestor
         return new ValidationError("No se pudo eliminar algo salio mal no se encontro al usuario");
     }
 
-    // ENVIAR MENSAJE PRIVADO 
+    // ENVIAR MENSAJE GRUPO PRIVADO 
     public async Task<IResultadoServicio> EnviarMensajeGrupoAsync(string rol, object mensaje)
     {
         // Buscamos si el usuario está actualmente online
         if (!_grupos.TryGetValue(rol, out var grupo)) return new NotFound("No se encontro el grupo"); 
 
+        string jsonTexto = JsonSerializer.Serialize(mensaje);
+        var bytes = Encoding.UTF8.GetBytes(jsonTexto);
+        var buffer = new ArraySegment<byte>(bytes, 0, bytes.Length);
 
+        await _semaforoEnvio.WaitAsync();
         foreach(var user in grupo)
         {
             var socket = user.Value;
             if (socket.State != WebSocketState.Open){continue;}
-
-            string jsonTexto = JsonSerializer.Serialize(mensaje);
-            var bytes = Encoding.UTF8.GetBytes(jsonTexto);
-            var buffer = new ArraySegment<byte>(bytes, 0, bytes.Length);
-
-            await _semaforoEnvio.WaitAsync();
+            
             try
             {
                 await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return new NotFound($"algo salio mal {ex.Message}");
-            }
-            finally
-            {
-                _semaforoEnvio.Release();
+                continue;
             }
         }
+
+        _semaforoEnvio.Release();
 
         return new Success();
     }
 
-    // EENVIAR MENSAJE ESPESIFICO GRUPO 
+    // EENVIAR MENSAJE ESPESIFICO UAUARIO EN UN GRUPO  
     public async Task<IResultadoServicio> EnviarMensajeUserEspesificoAsync(string rol, string idUsuario, object mensaje)
     {
         // Buscamos si el usuario está actualmente online
         if (!_grupos.TryGetValue(rol, out var grupo)) return new NotFound("No se encontro el grupo"); 
-        if (!grupo.TryGetValue(idUsuario, out var socket)) return new NotFound("No se encontro el grupo"); 
+        if (!grupo.TryGetValue(idUsuario, out var socket)) return new NotFound("No se encontro el usuario"); 
 
 
         if (socket.State != WebSocketState.Open) return new NotFound("No esta abierto el socket");

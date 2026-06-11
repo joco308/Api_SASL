@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "openapi-generator": {
+      "source": "patricio0312rev/skills",
+      "sourceType": "github",
+      "skillPath": "testing/openapi-generator/SKILL.md",
+      "computedHash": "6845d6237b4d867cd4490201c03c6eafb076508f970a1b5aa8df2a899f2019ac"
+    }
+  }
+}

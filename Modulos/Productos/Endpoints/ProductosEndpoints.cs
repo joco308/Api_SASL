@@ -19,8 +19,8 @@ public static class ProductosEndpoints
             var productos = await logica.listarRecursos();
             return Results.Ok(productos);
         })
-        .WithSummary("Listar todos los recursos/productos");
-
+        .WithSummary("Listar todos los recursos/productos")
+        .RequireAuthorization();
 //====================================================================================================
         // Añadir un nuevo recurso
         group.MapPost("/", async (AñadirRecurso dto, IProductosLogica logica) =>
